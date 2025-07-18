@@ -1,0 +1,27 @@
+---
+description: JSON-based status tracking for each BraveUniverse facet.
+globs:
+  - "**/*.sol"
+mode: always
+---
+
+# FACET STATUS STRUCTURE
+Each facet must be tracked with a dedicated JSON file placed in `/status/{FacetName}.json`
+
+## Format:
+```json
+{
+  "facet": "ExampleFacet",
+  "status": "IN_PROGRESS", // or: BUILD_READY, NEEDS_REVIEW, BLOCKED
+  "testCoverage": 100,
+  "multiUserTested": true,
+  "checklistComplete": true,
+  "gasSnapshotTakenAt": "2025-07-18T19:00:00Z",
+  "abiGenerated": true,
+  "facetMapLinked": true
+}
+```
+
+- `status` must be changed manually by the Background Agent after test validation
+- `gasSnapshotTakenAt` must use UTC ISO format
+- Only `BUILD_READY` facets will be included in mainnet deployment plans

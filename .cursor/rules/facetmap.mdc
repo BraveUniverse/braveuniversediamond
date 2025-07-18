@@ -1,0 +1,26 @@
+---
+description: Mapping of all BraveUniverse facets and their logical groupings.
+globs:
+  - "**/*.sol"
+mode: always
+---
+
+# FACETMAP STRUCTURE
+
+Each facet must be registered under a domain in the main architecture file located at:
+`/facetmap/BraveUniverse-map.json`
+
+## Format:
+```json
+{
+  "core": ["Diamond", "DiamondCutFacet", "DiamondLoupeFacet"],
+  "ownership": ["OwnershipFacet"],
+  "games": ["GridottoFacet", "SpaceCannonFacet"]
+}
+```
+
+- Categories (`core`, `ownership`, `games`, etc.) are expandable.
+- Each facet name must match the actual `.sol` file name.
+- When a facet is created or removed, the facetmap must be updated.
+
+✅ Required before `BUILD_READY` state.

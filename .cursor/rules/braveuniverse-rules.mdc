@@ -1,0 +1,34 @@
+---
+description: Global BraveUniverse development rules and constraints.
+globs:
+  - "**/*"
+mode: always
+---
+
+# GLOBAL GOALS
+- Only LUKSO Testnet is used for all interactions
+- Production deployment is disabled (manually or automatically)
+- Facet lifecycle is strictly: draft → test → pass → ready → deploy
+- All artifacts and metadata must be properly exported
+
+# PROHIBITED
+- Production RPC usage (mainnet)
+- Inline assembly (unless justified with comment)
+- console.log in BUILD_READY state
+- Test skipping (e.g., `it.skip` or `describe.skip`)
+
+# QUALITY REQUIREMENTS
+- 100% test coverage
+- Multi-user simulation mandatory
+- Access control must be explicitly tested
+- Gas usage regression must remain <15% of last version
+
+# OUTPUTS REQUIRED
+- ABI in `/abis`
+- Deployment addresses in `/deployments/staging/addresses.json`
+- `facet-status` JSON per facet
+- `checklist` filled
+- English + Turkish docs per facet
+- `facetmap` updated
+
+✅ No facet is considered complete unless all outputs exist and all quality gates pass.
