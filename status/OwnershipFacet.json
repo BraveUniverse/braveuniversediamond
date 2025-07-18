@@ -1,0 +1,10 @@
+{
+  "facet": "OwnershipFacet",
+  "status": "BUILD_READY",
+  "testCoverage": 100,
+  "multiUserTested": true,
+  "checklistComplete": true,
+  "gasSnapshotTakenAt": "2025-07-18T21:37:00Z",
+  "abiGenerated": true,
+  "facetMapLinked": true
+}

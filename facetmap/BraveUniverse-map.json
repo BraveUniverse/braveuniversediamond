@@ -1,0 +1,4 @@
+{
+  "core": ["BraveUniverseDiamond", "DiamondCutFacet", "DiamondLoupeFacet"],
+  "ownership": ["OwnershipFacet"]
+}
