@@ -1,0 +1,44 @@
+{
+  "name": "brave-universe-diamond",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "hardhat test",
+    "compile": "hardhat compile",
+    "deploy:lukso": "hardhat run scripts/deploy.ts --network luksoTestnet",
+    "deploy:local": "hardhat run scripts/deploy.ts --network hardhat",
+    "node": "hardhat node",
+    "coverage": "hardhat coverage",
+    "gas": "REPORT_GAS=true hardhat test"
+  },
+  "keywords": [
+    "diamond",
+    "eip2535",
+    "lukso",
+    "brave-universe",
+    "defi"
+  ],
+  "author": "BraveUniverse Team",
+  "license": "MIT",
+  "description": "BraveUniverse Diamond - Modular smart contract system using EIP-2535",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@openzeppelin/contracts": "^4.9.6",
+    "@openzeppelin/contracts-upgradeable": "^5.4.0",
+    "@openzeppelin/hardhat-upgrades": "^3.9.1",
+    "@typechain/ethers-v6": "^0.5.0",
+    "@typechain/hardhat": "^9.0.0",
+    "@types/node": "^20.0.0",
+    "hardhat": "^2.26.0",
+    "hardhat-gas-reporter": "^2.0.0",
+    "solidity-coverage": "^0.8.0",
+    "ts-node": "^10.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.0"
+  },
+  "directories": {
+    "test": "test"
+  }
+}
