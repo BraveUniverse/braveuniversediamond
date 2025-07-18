@@ -1,0 +1,20 @@
+---
+description: Gas usage snapshot and regression rules per facet.
+globs:
+  - "facets/**/*.sol"
+mode: always
+---
+
+# Gas Benchmarking Policy
+
+- Each facet must include a snapshot of gas usage for all public/external functions.
+- Snapshot must be taken after tests pass and before BUILD_READY.
+- Regression must not exceed 15% compared to last snapshot.
+- Snapshots stored in `gas/FacetName-snapshot.json`.
+
+Example JSON:
+{
+"function": "mint(uint256)",
+"gasUsed": 98650,
+"date": "2025-07-18T18:00Z"
+}

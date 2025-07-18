@@ -1,0 +1,28 @@
+---
+description: Checklist structure for each BraveUniverse facet.
+globs:
+  - "**/*.sol"
+mode: always
+---
+
+# FACET CHECKLIST
+
+Her facet için `/checklist/{FacetName}.md` altında bir kontrol listesi bulunmalıdır.
+
+## Format:
+```markdown
+- [ ] Contract dosyası oluşturuldu
+- [ ] Interface tanımlandı
+- [ ] Gerekirse Storage lib yazıldı
+- [ ] Fonksiyonlar dokümante edildi
+- [ ] Access control testleri tamamlandı
+- [ ] Multi-user simülasyon testleri yazıldı
+- [ ] Tüm testler geçildi (Hardhat + testnet)
+- [ ] ABI oluşturuldu `/abis` altına eklendi
+- [ ] `FacetMap` güncellendi
+- [ ] `facet-status` JSON yazıldı
+- [ ] Türkçe ve İngilizce dökümantasyon hazırlandı
+- [ ] BUILD_READY olarak işaretlendi
+```
+
+✅ `BUILD_READY` olmadan önce bu dosya tamamen tamamlanmış olmalıdır.

@@ -1,0 +1,21 @@
+---
+description: Deployment script standards for testnet usage only.
+globs:
+  - "scripts/deploy/**/*.ts"
+mode: always
+---
+
+# Deployment Rules
+
+- Scripts must live in: `scripts/deploy/FacetName.deploy.ts`
+- Mainnet deploys are prohibited
+- Use only `luksoTestnet` or local Hardhat forks
+- All addresses stored in `deployments/staging/addresses.json`
+
+## Structure must include:
+- Facet name, timestamp, network
+- Gas used
+- Deployer address
+- Storage layout printout (optional)
+
+Deploy script should export `main()` and catch errors cleanly.

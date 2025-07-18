@@ -1,0 +1,28 @@
+---
+description: Documentation structure and multilingual writing standards.
+globs:
+  - "docs/facets/**/*.md"
+mode: always
+---
+
+# Facet Documentation Rules
+
+Each facet must have 2 docs:
+- English version: `docs/facets/en/FacetName.md`
+- Turkish version: `docs/facets/tr/FacetName.md`
+
+## Must include:
+- Facet purpose (1–3 sentence summary)
+- List of all external/public functions (name, args, return, visibility)
+- Storage structure explained
+- Access rules
+- Events emitted
+- Example interaction (per language)
+
+Use consistent headings:
+Purpose
+Functions
+Access Control
+Storage
+Events
+Examples
