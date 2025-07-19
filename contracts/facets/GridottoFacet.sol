@@ -135,18 +135,15 @@ contract GridottoFacet is IGridottoFacet {
         _processOfficialTicketPurchase(msg.sender, contextProfile, amount);
         
         // Check for VIP bonus
-        // Only check VIP Pass on mainnet/testnet, not in test environment
-        if (block.chainid != 31337) {
-            try IVIPPass(l.vipPassAddress).getHighestTierOwned(msg.sender) returns (uint8 userTier) {
-                if (userTier > 0) {
-                    uint256 bonusTickets = _calculateBonusTickets(amount, userTier);
-                    if (bonusTickets > 0) {
-                        _processOfficialTicketPurchase(msg.sender, msg.sender, bonusTickets);
-                    }
+        try IVIPPass(l.vipPassAddress).getHighestTierOwned(msg.sender) returns (uint8 userTier) {
+            if (userTier > 0) {
+                uint256 bonusTickets = _calculateBonusTickets(amount, userTier);
+                if (bonusTickets > 0) {
+                    _processOfficialTicketPurchase(msg.sender, msg.sender, bonusTickets);
                 }
-            } catch {
-                // VIP Pass not available or call failed, continue without bonus
             }
+        } catch {
+            // VIP Pass not available or call failed, continue without bonus
         }
         
         // Refund excess
@@ -158,8 +155,7 @@ contract GridottoFacet is IGridottoFacet {
         emit TicketPurchased(msg.sender, contextProfile, amount, 0);
         
         // Check if draw should happen
-        // Temporarily disabled for testing - enable in production
-        // _checkAndExecuteDraws();
+        _checkAndExecuteDraws();
     }
     
     function buyTicketsForSelected(address[] calldata selectedAddresses) 
@@ -209,8 +205,7 @@ contract GridottoFacet is IGridottoFacet {
             require(success, "Refund failed");
         }
         
-        // Temporarily disabled for testing - enable in production
-        // _checkAndExecuteDraws();
+        _checkAndExecuteDraws();
     }
     
     function claimPrize() external nonReentrant override {
