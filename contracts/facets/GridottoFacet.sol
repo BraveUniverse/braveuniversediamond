@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import "../interfaces/IGridottoFacet.sol";
 import "../libs/LibGridottoStorage.sol";
+import "../libs/LibAdminStorage.sol";
 import "../libs/LibDiamond.sol";
 import "../interfaces/IOracleFacet.sol";
 import "../interfaces/ILSP7DigitalAsset.sol";
@@ -26,12 +27,24 @@ interface IVIPPass {
 
 contract GridottoFacet is IGridottoFacet {
     using LibGridottoStorage for LibGridottoStorage.Layout;
+    using LibAdminStorage for LibAdminStorage.AdminLayout;
     
     // Constants
     uint256 constant MIN_TIME_BUFFER = 2 seconds;
     uint256 constant DRAW_LOCK_PERIOD = 10 minutes;
     uint256 constant MAX_BULK_BUY_ADDRESSES = 50;
     uint256 constant MAX_TICKETS_PER_DRAW = 100000;
+    
+    // Modifiers
+    modifier notBanned() {
+        require(!LibAdminStorage.isBanned(msg.sender), "User is banned");
+        _;
+    }
+    
+    modifier notBlacklisted() {
+        require(!LibAdminStorage.isBlacklisted(msg.sender), "User is blacklisted");
+        _;
+    }
     
     // VIP Tiers
     uint8 constant NO_TIER = 0;
@@ -110,7 +123,7 @@ contract GridottoFacet is IGridottoFacet {
     }
     
     // Official Draw Functions
-    function buyTicket(address profile) external payable notPaused nonReentrant override {
+    function buyTicket(address profile) external payable notPaused nonReentrant notBanned notBlacklisted override {
         _processOfficialTicketPurchase(msg.sender, profile, 1);
     }
     
@@ -585,9 +598,9 @@ contract GridottoFacet is IGridottoFacet {
             
             // Calculate prize and executor reward
             uint256 prizeAmount = l.drawPrizes[drawNumber];
-            uint256 fivePercent = (prizeAmount * 5) / 100;
-            uint256 maxReward = 5 ether; // 5 LYX max
-            uint256 executorReward = fivePercent > maxReward ? maxReward : fivePercent;
+            (uint256 executorPercent, uint256 maxReward) = LibAdminStorage.getExecutorRewardConfig();
+            uint256 executorReward = (prizeAmount * executorPercent) / 100;
+            if (executorReward > maxReward) executorReward = maxReward;
             prizeAmount -= executorReward;
             
             // Add to pending prizes
@@ -743,7 +756,7 @@ contract GridottoFacet is IGridottoFacet {
         LibGridottoStorage.ParticipationRequirement requirement,
         address requiredToken,
         uint256 minTokenAmount
-    ) external payable override returns (uint256 drawId) {
+    ) external payable override notBanned notBlacklisted returns (uint256 drawId) {
         require(drawType == LibGridottoStorage.DrawType.USER_LYX, "Invalid draw type");
         require(ticketPrice > 0, "Ticket price must be greater than 0");
         require(duration >= 1 hours && duration <= 30 days, "Invalid duration");
@@ -1015,6 +1028,9 @@ contract GridottoFacet is IGridottoFacet {
         l.activeUserDraws.push(drawId);
         l.userCreatedDraws[msg.sender].push(drawId);
         
+        // Update user stats
+        LibAdminStorage.updateUserStats(msg.sender, true, false, false, 0, 0);
+        
         emit UserDrawCreated(drawId, msg.sender, drawType, prizeConfig.model);
         return drawId;
     }
@@ -1037,8 +1053,9 @@ contract GridottoFacet is IGridottoFacet {
         uint256 totalCost = draw.ticketPrice * amount;
         require(msg.value >= totalCost, "Insufficient payment");
         
-        // Calculate fees (5% platform fee)
-        uint256 platformFee = (totalCost * 5) / 100;
+        // Calculate fees
+        uint256 platformFeePercent = LibAdminStorage.getPlatformFee();
+        uint256 platformFee = (totalCost * platformFeePercent) / 100;
         uint256 toPrizePool = totalCost - platformFee;
         
         // Update draw state
@@ -1096,8 +1113,9 @@ contract GridottoFacet is IGridottoFacet {
         ILSP7DigitalAsset token = ILSP7DigitalAsset(draw.tokenAddress);
         token.transfer(msg.sender, address(this), totalCost, true, "");
         
-        // Calculate fees (5% platform fee)
-        uint256 platformFee = (totalCost * 5) / 100;
+        // Calculate fees
+        uint256 platformFeePercent = LibAdminStorage.getPlatformFee();
+        uint256 platformFee = (totalCost * platformFeePercent) / 100;
         uint256 creatorFee = 0;
         
         if (draw.prizeConfig.addParticipationFees && draw.prizeConfig.participationFeePercent > 0) {

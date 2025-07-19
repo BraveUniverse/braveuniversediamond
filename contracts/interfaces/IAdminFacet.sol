@@ -15,6 +15,8 @@ interface IAdminFacet {
     event FeatureToggled(string feature, bool enabled);
     event LSP26AddressSet(address indexed lsp26Address);
     event VIPDiscountsUpdated(uint8 tier, uint256 discount);
+    event DrawCancelled(uint256 indexed drawId, string reason);
+    event EmergencyWithdrawal(address indexed admin, address indexed token, uint256 amount);
     
     // Platform Management
     function setPlatformFeePercent(uint256 feePercent) external;

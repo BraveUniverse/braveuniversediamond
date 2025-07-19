@@ -3,34 +3,46 @@ pragma solidity ^0.8.19;
 
 import "../interfaces/IAdminFacet.sol";
 import "../libs/LibGridottoStorage.sol";
+import "../libs/LibAdminStorage.sol";
 import "../libs/LibDiamond.sol";
 import "../interfaces/ILSP7DigitalAsset.sol";
 
 contract AdminFacet is IAdminFacet {
     using LibGridottoStorage for LibGridottoStorage.Layout;
+    using LibAdminStorage for LibAdminStorage.AdminLayout;
     
     modifier onlyOwner() {
         LibDiamond.enforceIsContractOwner();
         _;
     }
     
+    modifier notBanned() {
+        require(!LibAdminStorage.isBanned(msg.sender), "User is banned");
+        _;
+    }
+    
+    modifier notBlacklisted() {
+        require(!LibAdminStorage.isBlacklisted(msg.sender), "User is blacklisted");
+        _;
+    }
+    
     // Platform Management
     function setPlatformFeePercent(uint256 feePercent) external override onlyOwner {
         require(feePercent <= 20, "Fee too high"); // Max 20%
-        LibGridottoStorage.layout().platformFeePercent = feePercent;
+        LibAdminStorage.adminLayout().platformFeePercent = feePercent;
         emit PlatformFeeUpdated(feePercent);
     }
     
     function setMaxTicketsPerDraw(uint256 maxTickets) external override onlyOwner {
         require(maxTickets > 0, "Invalid max tickets");
-        LibGridottoStorage.layout().maxTicketsPerDraw = maxTickets;
-        emit DrawLimitsUpdated(maxTickets, LibGridottoStorage.layout().minDrawDuration);
+        LibAdminStorage.adminLayout().maxTicketsPerDraw = maxTickets;
+        emit DrawLimitsUpdated(maxTickets, LibAdminStorage.adminLayout().minDrawDuration);
     }
     
     function setMinDrawDuration(uint256 minDuration) external override onlyOwner {
         require(minDuration >= 300, "Min 5 minutes"); // At least 5 minutes
-        LibGridottoStorage.layout().minDrawDuration = minDuration;
-        emit DrawLimitsUpdated(LibGridottoStorage.layout().maxTicketsPerDraw, minDuration);
+        LibAdminStorage.adminLayout().minDrawDuration = minDuration;
+        emit DrawLimitsUpdated(LibAdminStorage.adminLayout().maxTicketsPerDraw, minDuration);
     }
     
     function setLSP26Address(address lsp26Address) external override onlyOwner {
@@ -40,7 +52,7 @@ contract AdminFacet is IAdminFacet {
     
     function setExecutorRewardConfig(uint256 percent, uint256 maxReward) external override onlyOwner {
         require(percent <= 10, "Percent too high"); // Max 10%
-        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        LibAdminStorage.AdminLayout storage l = LibAdminStorage.adminLayout();
         l.executorRewardPercent = percent;
         l.maxExecutorReward = maxReward;
         emit ExecutorRewardUpdated(percent, maxReward);
@@ -54,13 +66,14 @@ contract AdminFacet is IAdminFacet {
         uint256 completedDraws,
         uint256 totalUsers
     ) {
-        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
-        totalVolume = l.totalPlatformVolume;
-        totalProfit = l.ownerProfit;
-        activeDraws = l.activeUserDraws.length;
-        completedDraws = l.totalCompletedDraws;
-        // Count unique users (simplified - in production use a separate counter)
-        totalUsers = l.pendingPrizes.length;
+        LibAdminStorage.AdminLayout storage admin = LibAdminStorage.adminLayout();
+        LibGridottoStorage.Layout storage gridotto = LibGridottoStorage.layout();
+        
+        totalVolume = admin.totalPlatformVolume;
+        totalProfit = gridotto.ownerProfit;
+        activeDraws = gridotto.activeUserDraws.length;
+        completedDraws = admin.totalCompletedDraws;
+        totalUsers = admin.totalUsers;
     }
     
     function getTokenStats(address token) external view override returns (
@@ -68,13 +81,15 @@ contract AdminFacet is IAdminFacet {
         uint256 totalProfit,
         uint256 activeDraws
     ) {
-        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
-        totalVolume = l.tokenVolume[token];
-        totalProfit = l.ownerTokenProfit[token];
+        LibAdminStorage.AdminLayout storage admin = LibAdminStorage.adminLayout();
+        LibGridottoStorage.Layout storage gridotto = LibGridottoStorage.layout();
+        
+        totalVolume = admin.tokenVolume[token];
+        totalProfit = gridotto.ownerTokenProfit[token];
         
         // Count active token draws
-        for (uint256 i = 0; i < l.activeUserDraws.length; i++) {
-            LibGridottoStorage.UserDraw storage draw = l.userDraws[l.activeUserDraws[i]];
+        for (uint256 i = 0; i < gridotto.activeUserDraws.length; i++) {
+            LibGridottoStorage.UserDraw storage draw = gridotto.userDraws[gridotto.activeUserDraws[i]];
             if (draw.tokenAddress == token) {
                 activeDraws++;
             }
@@ -131,45 +146,45 @@ contract AdminFacet is IAdminFacet {
     }
     
     function setMinParticipants(uint256 minParticipants) external override onlyOwner {
-        LibGridottoStorage.layout().minParticipants = minParticipants;
+        LibAdminStorage.adminLayout().minParticipants = minParticipants;
     }
     
     // Access Control
     function blacklistAddress(address user) external override onlyOwner {
-        LibGridottoStorage.layout().blacklisted[user] = true;
+        LibAdminStorage.adminLayout().blacklisted[user] = true;
         emit AddressBlacklisted(user);
     }
     
     function whitelistAddress(address user) external override onlyOwner {
-        LibGridottoStorage.layout().blacklisted[user] = false;
+        LibAdminStorage.adminLayout().blacklisted[user] = false;
         emit AddressWhitelisted(user);
     }
     
     function isBlacklisted(address user) external view override returns (bool) {
-        return LibGridottoStorage.layout().blacklisted[user];
+        return LibAdminStorage.adminLayout().blacklisted[user];
     }
     
     function banUser(address user) external override onlyOwner {
-        LibGridottoStorage.layout().banned[user] = true;
+        LibAdminStorage.adminLayout().banned[user] = true;
         emit UserBanned(user);
     }
     
     function unbanUser(address user) external override onlyOwner {
-        LibGridottoStorage.layout().banned[user] = false;
+        LibAdminStorage.adminLayout().banned[user] = false;
         emit UserUnbanned(user);
     }
     
     function isBanned(address user) external view override returns (bool) {
-        return LibGridottoStorage.layout().banned[user];
+        return LibAdminStorage.adminLayout().banned[user];
     }
     
     // User Management
     function setUserDrawLimit(address user, uint256 maxActiveDraws) external override onlyOwner {
-        LibGridottoStorage.layout().userDrawLimit[user] = maxActiveDraws;
+        LibAdminStorage.adminLayout().userDrawLimit[user] = maxActiveDraws;
     }
     
     function setGlobalDrawLimit(uint256 maxDrawsPerUser) external override onlyOwner {
-        LibGridottoStorage.layout().globalDrawLimit = maxDrawsPerUser;
+        LibAdminStorage.adminLayout().globalDrawLimit = maxDrawsPerUser;
     }
     
     function getUserActivity(address user) external view override returns (
@@ -178,8 +193,8 @@ contract AdminFacet is IAdminFacet {
         uint256 totalWins,
         uint256 totalSpent
     ) {
-        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
-        LibGridottoStorage.UserStats memory stats = l.userStats[user];
+        LibAdminStorage.AdminLayout storage l = LibAdminStorage.adminLayout();
+        LibAdminStorage.UserStats memory stats = l.userStats[user];
         
         totalDrawsCreated = stats.totalDrawsCreated;
         totalParticipations = stats.totalParticipations;
@@ -196,30 +211,32 @@ contract AdminFacet is IAdminFacet {
     
     function setVIPTierBonusTickets(uint8 tier, uint256 bonusPercent) external override onlyOwner {
         require(bonusPercent <= 200, "Bonus too high"); // Max 200% bonus (3x tickets)
-        LibGridottoStorage.layout().vipBonusTickets[tier] = bonusPercent;
+        LibAdminStorage.adminLayout().vipBonusTickets[tier] = bonusPercent;
     }
     
     // Feature Toggles
     function enableFeature(string calldata feature) external override onlyOwner {
-        LibGridottoStorage.layout().features[feature] = true;
+        LibAdminStorage.adminLayout().features[feature] = true;
         emit FeatureToggled(feature, true);
     }
     
     function disableFeature(string calldata feature) external override onlyOwner {
-        LibGridottoStorage.layout().features[feature] = false;
+        LibAdminStorage.adminLayout().features[feature] = false;
         emit FeatureToggled(feature, false);
     }
     
     function isFeatureEnabled(string calldata feature) external view override returns (bool) {
-        return LibGridottoStorage.layout().features[feature];
+        return LibAdminStorage.adminLayout().features[feature];
     }
     
     // Emergency Functions
     function emergencyPauseAllDraws() external override onlyOwner {
+        LibAdminStorage.adminLayout().emergencyPause = true;
         LibGridottoStorage.layout().paused = true;
     }
     
     function emergencyResumeAllDraws() external override onlyOwner {
+        LibAdminStorage.adminLayout().emergencyPause = false;
         LibGridottoStorage.layout().paused = false;
     }
     
