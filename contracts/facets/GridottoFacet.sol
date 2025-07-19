@@ -965,10 +965,8 @@ contract GridottoFacet is IGridottoFacet {
                 // For token draws, transfer tokens to winner
                 ILSP7DigitalAsset token = ILSP7DigitalAsset(draw.tokenAddress);
                 
-                // Calculate executor reward in tokens
+                // Calculate executor reward in tokens (5% no max limit)
                 uint256 tokenExecutorReward = (draw.currentPrizePool * 5) / 100;
-                uint256 maxTokenReward = 5 * (10 ** token.decimals()); // 5 tokens max
-                tokenExecutorReward = tokenExecutorReward > maxTokenReward ? maxTokenReward : tokenExecutorReward;
                 
                 // Transfer prize to winner
                 uint256 winnerPrize = draw.currentPrizePool - tokenExecutorReward;
@@ -989,16 +987,8 @@ contract GridottoFacet is IGridottoFacet {
                     nft.transfer(address(this), winner, draw.nftTokenIds[i], true, "");
                 }
                 
-                // NFT draws don't have executor rewards (no divisible assets)
-                // But executor gets any collected LYX fees
-                uint256 lyxReward = (draw.ticketsSold * draw.ticketPrice * 5) / 100;
-                if (lyxReward > 5 ether) lyxReward = 5 ether;
-                
-                if (lyxReward > 0) {
-                    (bool success, ) = msg.sender.call{value: lyxReward}("");
-                    require(success, "Executor LYX reward failed");
-                    emit DrawExecutorRewarded(msg.sender, lyxReward, drawId);
-                }
+                // NFT draws don't have executor rewards
+                // NFTs are indivisible, no reward for executor
                 
                 prizeAmount = draw.nftTokenIds.length; // Number of NFTs for event
             }
