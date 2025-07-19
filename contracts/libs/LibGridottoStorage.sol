@@ -15,7 +15,11 @@ library LibGridottoStorage {
     enum PrizeModel {
         CREATOR_FUNDED,
         PARTICIPANT_FUNDED,
-        HYBRID_FUNDED
+        HYBRID_FUNDED,
+        WINNER_TAKES_ALL,
+        SPLIT_EQUALLY,
+        TIERED_PERCENTAGE,
+        TIERED_FIXED
     }
 
     enum ParticipationRequirement {
@@ -24,7 +28,10 @@ library LibGridottoStorage {
         LSP7_HOLDER,
         LSP8_HOLDER,
         FOLLOWERS_AND_LSP7,
-        FOLLOWERS_AND_LSP8
+        FOLLOWERS_AND_LSP8,
+        HOLD_TOKEN,
+        VIP_PASS,
+        PROFILE_REQUIRED
     }
 
     struct DrawPrizeConfig {
@@ -32,6 +39,7 @@ library LibGridottoStorage {
         uint256 creatorContribution;
         bool addParticipationFees;
         uint256 participationFeePercent;
+        uint256 totalWinners; // For multi-winner draws
     }
     
     struct PrizeTier {
@@ -46,6 +54,19 @@ library LibGridottoStorage {
         uint256 totalWinners;
     }
     
+    struct TierConfig {
+        uint256 prizePercentage; // For percentage-based
+        uint256 fixedPrize;      // For fixed amount
+        bytes32 nftTokenId;      // Specific NFT for this tier
+    }
+    
+    struct LSP26Config {
+        bool requireFollowing;
+        address profileToFollow;
+        uint256 minFollowers;
+        bool requireMutualFollow;
+    }
+    
 
 
     struct UserDraw {
@@ -57,11 +78,13 @@ library LibGridottoStorage {
         uint256 ticketPrice;
         uint256 maxTickets;
         uint256 ticketsSold;
+        uint256 totalTickets; // Total tickets sold
         
         // Prize details
         address prizeToken;
         uint256 initialPrize;
         uint256 currentPrizePool;
+        uint256 currentPrize; // Current prize amount
         uint256 collectedFees;
         
         // For NFT
@@ -70,6 +93,7 @@ library LibGridottoStorage {
         // For LSP7/LSP8
         address tokenAddress;
         address nftAddress;
+        address nftContract; // NFT contract address
         bytes32[] nftTokenIds;
         
         // Participation
@@ -80,6 +104,9 @@ library LibGridottoStorage {
         
         // Multi-winner configuration
         MultiWinnerConfig winnerConfig;
+        
+        // LSP26 configuration
+        LSP26Config lsp26Config;
         
         // Status
         uint256 startTime;
@@ -126,6 +153,8 @@ library LibGridottoStorage {
         
         // User balances
         mapping(address => uint256) pendingPrizes;
+        mapping(address => mapping(address => uint256)) pendingTokenPrizes; // user => token => amount
+        mapping(address => mapping(address => bytes32[])) pendingNFTPrizes; // user => nftContract => tokenIds
         
         // Pool amounts
         uint256 monthlyPrizePool;
@@ -144,8 +173,13 @@ library LibGridottoStorage {
         // LSP26 Follower System (mainnet only)
         address lsp26Address;
         
+        // Phase 4: Tier configurations
+        mapping(uint256 => TierConfig[]) drawTiers; // drawId => tiers
+        mapping(uint256 => mapping(uint256 => bytes32)) tierNFTAssignments; // drawId => tier => nftTokenId
+        
         // Security
         bool paused;
+        bool locked; // Reentrancy guard
         mapping(address => uint256) lastActionTimestamp;
         
         // Creator profit tracking  

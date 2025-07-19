@@ -10,5 +10,8 @@
   "external": {
     "vipPassTestnet": "0x65EDE8652bEA3e139cAc3683F87230036A30404a",
     "vipPassMainnet": "0x5DD5fF2562ce2De02955eebB967C6094de438428"
-  }
+  },
+  "adminFacet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D",
+  "phase3Facet": "0x71E30D0055d57C796EB9F9fB94AD128B4C377F9B",
+  "phase4Facet": "0xfF7A397d8d33f66C8cf4417D6D355CdBF62D482b"
 }

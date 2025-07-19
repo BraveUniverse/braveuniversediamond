@@ -6,6 +6,7 @@ async function main() {
     
     const [deployer] = await ethers.getSigners();
     const gridotto = await ethers.getContractAt("GridottoFacet", addresses.diamond);
+    const phase3Facet = await ethers.getContractAt("GridottoPhase3Facet", addresses.diamond);
     
     console.log("💎 Diamond:", addresses.diamond);
     console.log("👤 Deployer:", deployer.address);
@@ -50,28 +51,31 @@ async function main() {
     let tokenDrawId: bigint;
     try {
         // Approve tokens for GridottoFacet
-        await testToken.authorizeOperator(addresses.diamond, ethers.parseEther("100"));
+        const authTx = await testToken.authorizeOperator(addresses.diamond, ethers.parseEther("1000"));
+        await authTx.wait();
         console.log("✅ Authorized Diamond as operator");
         
-        const prizeConfig = {
-            model: 0, // CREATOR_FUNDED
-            creatorContribution: ethers.parseEther("100"), // 100 tokens
-            addParticipationFees: true,
-            participationFeePercent: 10 // 10% to creator
-        };
+        // Check operator allowance
+        const allowance = await testToken.authorizedAmountFor(addresses.diamond, deployer.address);
+        console.log("Operator allowance:", ethers.formatEther(allowance), "TEST");
         
-        const tx = await gridotto.createTokenDraw(
+        // Check balance
+        const balance = await testToken.balanceOf(deployer.address);
+        console.log("Deployer balance:", ethers.formatEther(balance), "TEST");
+        
+        const tx = await phase3Facet.createTokenDraw(
             tokenAddress,
             ethers.parseEther("100"), // 100 tokens prize
-            prizeConfig,
             ethers.parseEther("10"), // 10 tokens per ticket
             3600, // 1 hour
             10, // max 10 tickets
-            0 // NONE - no requirements
+            0, // NONE - no requirements
+            ethers.ZeroAddress, // required token
+            0 // min token amount
         );
         
         const receipt = await tx.wait();
-        const event = receipt.logs.find((log: any) => log.fragment?.name === "UserDrawCreated");
+        const event = receipt.logs.find((log: any) => log.fragment?.name === "TokenDrawCreated");
         tokenDrawId = event.args[0];
         
         console.log("✅ Token draw created! ID:", tokenDrawId.toString());
@@ -89,13 +93,28 @@ async function main() {
         // Approve more tokens for ticket purchase
         await testToken.authorizeOperator(addresses.diamond, ethers.parseEther("50"));
         
-        const buyTx = await gridotto.buyUserDrawTicketWithToken(tokenDrawId, 5);
+        const buyTx = await phase3Facet.buyTokenDrawTicket(tokenDrawId, 5);
         await buyTx.wait();
         console.log("✅ Bought 5 tickets with 50 TEST tokens");
         
-        // Check if can execute
-        const canExecute = await gridotto.canExecuteDraw(tokenDrawId);
-        console.log("Can execute:", canExecute);
+    } catch (error: any) {
+        console.log("❌ Error:", error.message);
+    }
+    
+    // Execute token draw
+    console.log("\n=== Test 2.5: Execute Token Draw ===");
+    try {
+        // Wait for draw to end
+        console.log("⏰ Waiting for draw to end...");
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        const executeTx = await phase3Facet.executeTokenDraw(tokenDrawId);
+        await executeTx.wait();
+        console.log("✅ Token draw executed!");
+        
+        // Check winner
+        const drawInfo = await gridotto.getUserDrawInfo(tokenDrawId);
+        console.log("Winner:", drawInfo.winners[0]);
         
     } catch (error: any) {
         console.log("❌ Error:", error.message);
@@ -111,17 +130,19 @@ async function main() {
         }
         console.log("✅ Authorized Diamond for all NFTs");
         
-        const tx = await gridotto.createNFTDraw(
+        const tx = await phase3Facet.createNFTDraw(
             nftAddress,
             nftIds,
             ethers.parseEther("0.1"), // 0.1 LYX per ticket
             3600, // 1 hour
             5, // max 5 tickets
-            0 // NONE - no requirements
+            0, // NONE - no requirements
+            ethers.ZeroAddress, // required token
+            0 // min token amount
         );
         
         const receipt = await tx.wait();
-        const event = receipt.logs.find((log: any) => log.fragment?.name === "UserDrawCreated");
+        const event = receipt.logs.find((log: any) => log.fragment?.name === "NFTDrawCreated");
         nftDrawId = event.args[0];
         
         console.log("✅ NFT draw created! ID:", nftDrawId.toString());
@@ -136,21 +157,25 @@ async function main() {
     // Test 4: Buy NFT draw tickets
     console.log("\n=== Test 4: Buy NFT Draw Tickets ===");
     try {
-        const buyTx = await gridotto.buyUserDrawTicket(nftDrawId, 5, {
+        const buyTx = await phase3Facet.buyNFTDrawTicket(nftDrawId, 5, {
             value: ethers.parseEther("0.5") // 5 * 0.1 LYX
         });
         await buyTx.wait();
         console.log("✅ Bought all 5 tickets");
         
+        // Wait for draw to end
+        console.log("⏰ Waiting for draw to end...");
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
         // Execute NFT draw
-        const executeTx = await gridotto.executeUserDraw(nftDrawId);
+        const executeTx = await phase3Facet.executeNFTDraw(nftDrawId);
         const receipt = await executeTx.wait();
         
         console.log("✅ NFT draw executed!");
         
-        // Check winner
-        const winners = await gridotto.getDrawWinners(nftDrawId);
-        console.log("Winner:", winners[0]);
+        // Check winner from draw info
+        const drawInfo = await gridotto.getUserDrawInfo(nftDrawId);
+        console.log("Winner:", drawInfo.winners[0]);
         
         // Check NFT ownership
         const nftOwner = await testNFT.tokenOwnerOf(nftIds[0]);
@@ -196,6 +221,29 @@ async function main() {
     console.log("✅ NFT transfers to winners working");
     console.log("✅ Token profit tracking working");
     console.log("✅ Phase 3 complete!");
+    
+    // Test 7: Claim prizes
+    console.log("\n=== Test 7: Claim Prizes ===");
+    try {
+        // Claim token prize
+        const tokenClaimTx = await phase3Facet.claimTokenPrize(tokenAddress);
+        await tokenClaimTx.wait();
+        console.log("✅ Token prize claimed!");
+        
+        // Claim NFT prize
+        const nftClaimTx = await phase3Facet.claimNFTPrize(nftAddress);
+        await nftClaimTx.wait();
+        console.log("✅ NFT prize claimed!");
+        
+        // Check final NFT ownership
+        for (const id of nftIds) {
+            const owner = await testNFT.tokenOwnerOf(id);
+            console.log(`NFT ${id} owner:`, owner);
+        }
+        
+    } catch (error: any) {
+        console.log("❌ Error:", error.message);
+    }
     
     console.log("\n🎉 All LSP7/LSP8 tests passed!");
 }

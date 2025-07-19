@@ -905,7 +905,8 @@ contract GridottoFacet is IGridottoFacet {
             model: LibGridottoStorage.PrizeModel.CREATOR_FUNDED,
             creatorContribution: 0, // Not used for NFTs
             addParticipationFees: true,
-            participationFeePercent: 5 // 5% to creator
+            participationFeePercent: 5, // 5% to creator
+            totalWinners: 1
         });
         
         l.activeUserDraws.push(drawId);

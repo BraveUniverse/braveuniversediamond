@@ -4,6 +4,22 @@ pragma solidity ^0.8.0;
 import "../libs/LibGridottoStorage.sol";
 
 interface IGridottoFacet {
+    // Import struct from storage for use in interface
+    struct AdvancedDrawConfig {
+        uint256 ticketPrice;
+        uint256 duration;
+        uint256 maxTickets;
+        uint256 initialPrize;
+        LibGridottoStorage.ParticipationRequirement requirement;
+        address requiredToken;
+        uint256 minTokenAmount;
+        LibGridottoStorage.DrawPrizeConfig prizeConfig;
+        LibGridottoStorage.LSP26Config lsp26Config;
+        address tokenAddress; // For LSP7
+        address nftContract; // For LSP8
+        bytes32[] nftTokenIds; // For LSP8
+        LibGridottoStorage.TierConfig[] tiers; // For tiered prizes
+    }
     // Events
     event TicketPurchased(address indexed buyer, address indexed profileId, uint256 amount, uint256 drawType);
     event DrawExecuted(uint256 drawNumber, address winner, uint256 prize, uint256 drawType);
