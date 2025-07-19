@@ -1,0 +1,14 @@
+{
+  "diamond": "0x5Ad808FAE645BA3682170467114e5b80A70bF276",
+  "facets": {
+    "diamondCut": "0x528B2aD05dB526a2245c6621cB7D320E127d3be8",
+    "diamondLoupe": "0xC5B9bb6d38B0f9E908BCa96E2154fF1C5ceca9D1",
+    "ownership": "0x6D2E0C2205A0660A6C5F0a0fAAA61D8107cC8260",
+    "oracle": "0x7440762Df9E369E1b7BA2942d2Bf4605B51880C2",
+    "gridotto": "0x1a416e97aDC23b10f2208C92d6DC5113d7dD6528"
+  },
+  "external": {
+    "vipPassTestnet": "0x65EDE8652bEA3e139cAc3683F87230036A30404a",
+    "vipPassMainnet": "0x5DD5fF2562ce2De02955eebB967C6094de438428"
+  }
+}

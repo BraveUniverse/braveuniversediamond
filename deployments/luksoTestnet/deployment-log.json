@@ -1,0 +1,106 @@
+{
+  "network": "luksoTestnet",
+  "chainId": 4201,
+  "rpcUrl": "https://rpc.testnet.lukso.network",
+  "explorer": "https://explorer.execution.testnet.lukso.network",
+  "lastUpdated": "2024-12-19T15:45:00Z",
+  "diamond": {
+    "address": "0x5Ad808FAE645BA3682170467114e5b80A70bF276",
+    "deploymentDate": "2024-12-19",
+    "deployer": "0x38e456661bc6e95A3aCf3B4673844Cb389b60243"
+  },
+  "deployments": [
+    {
+      "timestamp": "2024-12-19T15:40:00Z",
+      "deployer": "0x38e456661bc6e95A3aCf3B4673844Cb389b60243",
+      "contractName": "DiamondCutFacet",
+      "address": "0x528B2aD05dB526a2245c6621cB7D320E127d3be8",
+      "status": "success",
+      "verified": false
+    },
+    {
+      "timestamp": "2024-12-19T15:40:10Z",
+      "deployer": "0x38e456661bc6e95A3aCf3B4673844Cb389b60243",
+      "contractName": "BraveUniverseDiamond",
+      "address": "0x5Ad808FAE645BA3682170467114e5b80A70bF276",
+      "status": "success",
+      "verified": false
+    },
+    {
+      "timestamp": "2024-12-19T15:40:20Z",
+      "deployer": "0x38e456661bc6e95A3aCf3B4673844Cb389b60243",
+      "contractName": "DiamondLoupeFacet",
+      "address": "0xC5B9bb6d38B0f9E908BCa96E2154fF1C5ceca9D1",
+      "status": "success",
+      "verified": false
+    },
+    {
+      "timestamp": "2024-12-19T15:40:30Z",
+      "deployer": "0x38e456661bc6e95A3aCf3B4673844Cb389b60243",
+      "contractName": "OwnershipFacet",
+      "address": "0x6D2E0C2205A0660A6C5F0a0fAAA61D8107cC8260",
+      "status": "success",
+      "verified": false
+    },
+    {
+      "timestamp": "2024-12-19T15:40:40Z",
+      "deployer": "0x38e456661bc6e95A3aCf3B4673844Cb389b60243",
+      "contractName": "OracleFacet",
+      "address": "0x7440762Df9E369E1b7BA2942d2Bf4605B51880C2",
+      "status": "success",
+      "verified": false
+    },
+    {
+      "timestamp": "2024-12-19T15:40:50Z",
+      "deployer": "0x38e456661bc6e95A3aCf3B4673844Cb389b60243",
+      "contractName": "GridottoFacet",
+      "address": "0x1a416e97aDC23b10f2208C92d6DC5113d7dD6528",
+      "status": "success",
+      "verified": false
+    }
+  ],
+  "transactions": [
+    {
+      "type": "diamondCut",
+      "timestamp": "2024-12-19T15:41:00Z",
+      "description": "Added all facets to Diamond",
+      "status": "success"
+    },
+    {
+      "type": "initialization",
+      "timestamp": "2024-12-19T15:41:10Z",
+      "facet": "OracleFacet",
+      "status": "success"
+    },
+    {
+      "type": "initialization",
+      "timestamp": "2024-12-19T15:41:20Z",
+      "facet": "GridottoFacet",
+      "status": "success"
+    },
+    {
+      "type": "test",
+      "timestamp": "2024-12-19T15:43:00Z",
+      "description": "Bought 5 tickets",
+      "txHash": "0x8ffb20fb51fc494923ea674264cd2af1dcec901c2a60cdd8a09d66cdbe67e11f",
+      "status": "success"
+    },
+    {
+      "type": "test",
+      "timestamp": "2024-12-19T15:43:30Z",
+      "description": "Manual draw executed",
+      "txHash": "0xc67326720dfe7f784d66a26f002f070421f5d1c220592845c79f04e030b1b131",
+      "winner": "0x38e456661bc6e95A3aCf3B4673844Cb389b60243",
+      "prize": "0.3375 LYX",
+      "status": "success"
+    },
+    {
+      "type": "test",
+      "timestamp": "2024-12-19T15:44:00Z",
+      "description": "Prize claimed",
+      "txHash": "0xca2095718429db61a1f0077a465fc520a718fdcf3c9792ea8df283ceaa69f20b",
+      "amount": "0.3375 LYX",
+      "status": "success"
+    }
+  ]
+}
