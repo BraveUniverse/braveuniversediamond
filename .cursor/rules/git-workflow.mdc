@@ -1,0 +1,36 @@
+---
+
+# GIT WORKFLOW RULES
+
+## Branch Strategy
+- **ALL commits MUST be made directly to the `main` branch**
+- Feature branches are PROHIBITED
+- No pull requests required for Background Agent commits
+- Direct push to main is the standard workflow
+
+## Commit Rules
+- Commit messages must be descriptive and in English
+- Format: `feat: description` or `fix: description` or `docs: description`
+- Each logical change should be a separate commit
+- Never commit with generic messages like "update" or "fix"
+
+## Push Policy
+- Always pull before push: `git pull origin main`
+- Push immediately after commit
+- Never leave local commits unpushed
+
+## Workflow Steps
+1. Ensure you're on main: `git checkout main`
+2. Pull latest: `git pull origin main`
+3. Make changes
+4. Add files: `git add .`
+5. Commit: `git commit -m "feat: descriptive message"`
+6. Push: `git push origin main`
+
+## PROHIBITED
+- Creating new branches
+- Working on branches other than main
+- Keeping local changes without committing
+- Squashing or rebasing commits
+
+✅ REMEMBER: All work happens directly on main branch!
