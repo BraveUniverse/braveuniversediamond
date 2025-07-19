@@ -151,9 +151,7 @@ contract OracleFacet {
     }
 
     // Test oracle connection
-    function testOracleConnection() external view returns (bool success, uint256 value) {
-        LibOracleStorage.Layout storage l = LibOracleStorage.layout();
-        
+    function testOracleConnection() external pure returns (bool success, uint256 value) {
         // For testing, always return false (no real oracle)
         return (false, 0);
     }
