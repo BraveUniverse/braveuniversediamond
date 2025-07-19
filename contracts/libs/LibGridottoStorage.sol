@@ -53,6 +53,11 @@ library LibGridottoStorage {
         // For NFT
         bytes32[] prizeTokenIds;
         
+        // For LSP7/LSP8
+        address tokenAddress;
+        address nftAddress;
+        bytes32[] nftTokenIds;
+        
         // Participation
         ParticipationRequirement requirement;
         address requiredToken;
@@ -90,6 +95,8 @@ library LibGridottoStorage {
         mapping(uint256 => UserDraw) userDraws;
         mapping(address => uint256[]) userCreatedDraws;
         mapping(address => uint256[]) userParticipatedDraws;
+        uint256[] activeUserDraws;
+        mapping(uint256 => mapping(address => bool)) hasParticipated;
         
         // Official draw storage (legacy compatible)
         mapping(uint256 => address[]) drawTickets;
@@ -106,6 +113,7 @@ library LibGridottoStorage {
         uint256 monthlyPrizePool;
         uint256 currentDrawPrizePool;
         uint256 ownerProfit;
+        mapping(address => uint256) ownerTokenProfit; // token address => amount
         
         // Oracle
         address oracleAddress;
@@ -118,6 +126,10 @@ library LibGridottoStorage {
         // Security
         bool paused;
         mapping(address => uint256) lastActionTimestamp;
+        
+        // Creator profit tracking  
+        mapping(address => uint256) creatorProfit;
+        mapping(address => mapping(address => uint256)) creatorTokenProfit; // creator => token => amount
     }
 
     function layout() internal pure returns (Layout storage l) {

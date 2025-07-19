@@ -12,7 +12,9 @@ interface IGridottoFacet {
     event AdminWithdrawal(address indexed admin, uint256 amount);
     event EmergencyWithdrawal(address indexed admin, address indexed to, uint256 amount);
     event DrawCancelled(uint256 drawNumber, string reason);
-    event UserDrawCreated(uint256 indexed drawId, address indexed creator, LibGridottoStorage.DrawType drawType);
+    event UserDrawCreated(uint256 indexed drawId, address indexed creator, LibGridottoStorage.DrawType drawType, LibGridottoStorage.PrizeModel prizeModel);
+    event UserDrawTicketPurchased(uint256 indexed drawId, address indexed buyer, uint256 amount, uint256 totalCost);
+    event CreatorWithdrawal(address indexed creator, uint256 amount);
     event UserDrawCompleted(uint256 indexed drawId, address[] winners, uint256 totalPrize);
     event DrawExecutorRewarded(address indexed executor, uint256 reward, uint256 drawId);
 

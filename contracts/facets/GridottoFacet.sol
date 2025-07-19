@@ -5,6 +5,8 @@ import "../interfaces/IGridottoFacet.sol";
 import "../libs/LibGridottoStorage.sol";
 import "../libs/LibDiamond.sol";
 import "../interfaces/IOracleFacet.sol";
+import "../interfaces/ILSP7DigitalAsset.sol";
+import "../interfaces/ILSP8IdentifiableDigitalAsset.sol";
 
 interface ILSP7 {
     function transfer(address from, address to, uint256 amount, bool force, bytes memory data) external;
@@ -28,6 +30,7 @@ contract GridottoFacet is IGridottoFacet {
     uint256 constant MIN_TIME_BUFFER = 2 seconds;
     uint256 constant DRAW_LOCK_PERIOD = 10 minutes;
     uint256 constant MAX_BULK_BUY_ADDRESSES = 50;
+    uint256 constant MAX_TICKETS_PER_DRAW = 100000;
     
     // VIP Tiers
     uint8 constant NO_TIER = 0;
@@ -659,7 +662,7 @@ contract GridottoFacet is IGridottoFacet {
         // Add to creator's draws
         l.userCreatedDraws[msg.sender].push(drawId);
         
-        emit UserDrawCreated(drawId, msg.sender, drawType);
+        emit UserDrawCreated(drawId, msg.sender, drawType, prizeConfig.model);
         
         return drawId;
     }
@@ -673,7 +676,53 @@ contract GridottoFacet is IGridottoFacet {
         uint256 maxTickets,
         LibGridottoStorage.ParticipationRequirement requirement
     ) external override returns (uint256 drawId) {
-        revert("Token draws not yet implemented");
+        require(tokenAddress != address(0), "Invalid token address");
+        require(tokenAmount > 0, "Token amount must be > 0");
+        require(ticketPriceLYX > 0, "Ticket price must be > 0");
+        require(duration >= MIN_TIME_BUFFER, "Invalid duration");
+        require(maxTickets > 0 && maxTickets <= MAX_TICKETS_PER_DRAW, "Invalid max tickets");
+        
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        drawId = l.nextDrawId++;
+        
+        LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
+        draw.creator = msg.sender;
+        draw.drawType = LibGridottoStorage.DrawType.USER_LSP7;
+        draw.prizeConfig = prizeConfig;
+        draw.ticketPrice = ticketPriceLYX;
+        draw.endTime = block.timestamp + duration;
+        draw.maxTickets = maxTickets;
+        draw.requirement = requirement;
+        draw.tokenAddress = tokenAddress;
+        draw.startTime = block.timestamp;
+        
+        // Handle token transfer based on prize model
+        if (prizeConfig.model == LibGridottoStorage.PrizeModel.CREATOR_FUNDED) {
+            require(prizeConfig.creatorContribution == tokenAmount, "Creator contribution mismatch");
+            
+            // Transfer tokens from creator to contract
+            ILSP7DigitalAsset token = ILSP7DigitalAsset(tokenAddress);
+            token.transfer(msg.sender, address(this), tokenAmount, true, "");
+            
+            draw.currentPrizePool = tokenAmount;
+        } else if (prizeConfig.model == LibGridottoStorage.PrizeModel.PARTICIPANT_FUNDED) {
+            require(prizeConfig.creatorContribution == 0, "No creator contribution for participant funded");
+            draw.currentPrizePool = 0;
+        } else {
+            // HYBRID_FUNDED
+            require(prizeConfig.creatorContribution > 0 && prizeConfig.creatorContribution <= tokenAmount, "Invalid creator contribution");
+            
+            // Transfer creator's contribution
+            ILSP7DigitalAsset token = ILSP7DigitalAsset(tokenAddress);
+            token.transfer(msg.sender, address(this), prizeConfig.creatorContribution, true, "");
+            
+            draw.currentPrizePool = prizeConfig.creatorContribution;
+        }
+        
+        l.activeUserDraws.push(drawId);
+        l.userCreatedDraws[msg.sender].push(drawId);
+        
+        emit UserDrawCreated(drawId, msg.sender, LibGridottoStorage.DrawType.USER_LSP7, prizeConfig.model);
     }
     
     function createNFTDraw(
@@ -684,7 +733,50 @@ contract GridottoFacet is IGridottoFacet {
         uint256 maxTickets,
         LibGridottoStorage.ParticipationRequirement requirement
     ) external override returns (uint256 drawId) {
-        revert("NFT draws not yet implemented");
+        require(nftAddress != address(0), "Invalid NFT address");
+        require(tokenIds.length > 0, "No NFTs provided");
+        require(ticketPrice > 0, "Ticket price must be > 0");
+        require(duration >= MIN_TIME_BUFFER, "Invalid duration");
+        require(maxTickets > 0 && maxTickets <= MAX_TICKETS_PER_DRAW, "Invalid max tickets");
+        
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        drawId = l.nextDrawId++;
+        
+        LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
+        draw.creator = msg.sender;
+        draw.drawType = LibGridottoStorage.DrawType.USER_LSP8;
+        draw.ticketPrice = ticketPrice;
+        draw.endTime = block.timestamp + duration;
+        draw.maxTickets = maxTickets;
+        draw.requirement = requirement;
+        draw.nftAddress = nftAddress;
+        draw.startTime = block.timestamp;
+        
+        // Transfer NFTs from creator to contract
+        ILSP8IdentifiableDigitalAsset nft = ILSP8IdentifiableDigitalAsset(nftAddress);
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            // Check ownership
+            require(nft.tokenOwnerOf(tokenIds[i]) == msg.sender, "Not NFT owner");
+            
+            // Transfer NFT to contract
+            nft.transfer(msg.sender, address(this), tokenIds[i], true, "");
+            
+            // Store NFT ID
+            draw.nftTokenIds.push(tokenIds[i]);
+        }
+        
+        // For NFT draws, prize config is simple - winner gets all NFTs
+        draw.prizeConfig = LibGridottoStorage.DrawPrizeConfig({
+            model: LibGridottoStorage.PrizeModel.CREATOR_FUNDED,
+            creatorContribution: 0, // Not used for NFTs
+            addParticipationFees: true,
+            participationFeePercent: 5 // 5% to creator
+        });
+        
+        l.activeUserDraws.push(drawId);
+        l.userCreatedDraws[msg.sender].push(drawId);
+        
+        emit UserDrawCreated(drawId, msg.sender, LibGridottoStorage.DrawType.USER_LSP8, LibGridottoStorage.PrizeModel.CREATOR_FUNDED);
     }
     
     function buyUserDrawTicket(uint256 drawId, uint256 amount) external payable override {
@@ -743,8 +835,64 @@ contract GridottoFacet is IGridottoFacet {
     }
     
     function buyUserDrawTicketWithToken(uint256 drawId, uint256 amount) external override {
-        // Token draw implementation will be added after LSP7 integration
-        revert("Token draws not yet implemented");
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
+        
+        require(draw.creator != address(0), "Draw does not exist");
+        require(draw.drawType == LibGridottoStorage.DrawType.USER_LSP7, "Not a token draw");
+        require(!draw.isCompleted, "Draw already completed");
+        require(block.timestamp >= draw.startTime, "Draw not started");
+        require(block.timestamp < draw.endTime, "Draw ended");
+        require(amount > 0, "Amount must be greater than 0");
+        require(draw.ticketsSold + amount <= draw.maxTickets, "Exceeds max tickets");
+        
+        // Check participation requirements
+        _checkParticipationRequirements(draw, msg.sender);
+        
+        // Calculate cost in tokens
+        uint256 totalCost = draw.ticketPrice * amount;
+        
+        // Transfer tokens from buyer to contract
+        ILSP7DigitalAsset token = ILSP7DigitalAsset(draw.tokenAddress);
+        token.transfer(msg.sender, address(this), totalCost, true, "");
+        
+        // Calculate fees (5% platform fee)
+        uint256 platformFee = (totalCost * 5) / 100;
+        uint256 creatorFee = 0;
+        
+        if (draw.prizeConfig.addParticipationFees && draw.prizeConfig.participationFeePercent > 0) {
+            creatorFee = (totalCost * draw.prizeConfig.participationFeePercent) / 100;
+        }
+        
+        uint256 toPrizePool = totalCost - platformFee - creatorFee;
+        
+        // Update prize pool
+        if (draw.prizeConfig.model != LibGridottoStorage.PrizeModel.CREATOR_FUNDED) {
+            draw.currentPrizePool += toPrizePool;
+        }
+        
+        // Update platform profit (in tokens)
+        l.ownerTokenProfit[draw.tokenAddress] += platformFee;
+        
+        // Update creator profit (in tokens)
+        if (creatorFee > 0) {
+            l.creatorTokenProfit[draw.creator][draw.tokenAddress] += creatorFee;
+        }
+        
+        // Add tickets
+        for (uint256 i = 0; i < amount; i++) {
+            draw.participants.push(msg.sender);
+        }
+        
+        draw.ticketsSold += amount;
+        
+        // Track user participation
+        if (!l.hasParticipated[drawId][msg.sender]) {
+            l.hasParticipated[drawId][msg.sender] = true;
+            l.userParticipatedDraws[msg.sender].push(drawId);
+        }
+        
+        emit UserDrawTicketPurchased(drawId, msg.sender, amount, totalCost);
     }
     
     function executeUserDraw(uint256 drawId) external override {
@@ -802,14 +950,57 @@ contract GridottoFacet is IGridottoFacet {
                 }
             }
             
-            // Add to winner's pending prizes
-            l.pendingPrizes[winner] += prizeAmount;
-            
-            // Reward the executor (person who called this function)
-            if (executorReward > 0) {
-                (bool success, ) = msg.sender.call{value: executorReward}("");
-                require(success, "Executor reward transfer failed");
-                emit DrawExecutorRewarded(msg.sender, executorReward, drawId);
+            // Handle prize distribution based on draw type
+            if (draw.drawType == LibGridottoStorage.DrawType.USER_LYX) {
+                // Add to winner's pending prizes
+                l.pendingPrizes[winner] += prizeAmount;
+                
+                // Reward the executor (person who called this function)
+                if (executorReward > 0) {
+                    (bool success, ) = msg.sender.call{value: executorReward}("");
+                    require(success, "Executor reward transfer failed");
+                    emit DrawExecutorRewarded(msg.sender, executorReward, drawId);
+                }
+            } else if (draw.drawType == LibGridottoStorage.DrawType.USER_LSP7) {
+                // For token draws, transfer tokens to winner
+                ILSP7DigitalAsset token = ILSP7DigitalAsset(draw.tokenAddress);
+                
+                // Calculate executor reward in tokens
+                uint256 tokenExecutorReward = (draw.currentPrizePool * 5) / 100;
+                uint256 maxTokenReward = 5 * (10 ** token.decimals()); // 5 tokens max
+                tokenExecutorReward = tokenExecutorReward > maxTokenReward ? maxTokenReward : tokenExecutorReward;
+                
+                // Transfer prize to winner
+                uint256 winnerPrize = draw.currentPrizePool - tokenExecutorReward;
+                token.transfer(address(this), winner, winnerPrize, true, "");
+                
+                // Transfer executor reward
+                if (tokenExecutorReward > 0) {
+                    token.transfer(address(this), msg.sender, tokenExecutorReward, true, "");
+                    emit DrawExecutorRewarded(msg.sender, tokenExecutorReward, drawId);
+                }
+                
+                prizeAmount = winnerPrize; // For event
+            } else if (draw.drawType == LibGridottoStorage.DrawType.USER_LSP8) {
+                // For NFT draws, transfer all NFTs to winner
+                ILSP8IdentifiableDigitalAsset nft = ILSP8IdentifiableDigitalAsset(draw.nftAddress);
+                
+                for (uint256 i = 0; i < draw.nftTokenIds.length; i++) {
+                    nft.transfer(address(this), winner, draw.nftTokenIds[i], true, "");
+                }
+                
+                // NFT draws don't have executor rewards (no divisible assets)
+                // But executor gets any collected LYX fees
+                uint256 lyxReward = (draw.ticketsSold * draw.ticketPrice * 5) / 100;
+                if (lyxReward > 5 ether) lyxReward = 5 ether;
+                
+                if (lyxReward > 0) {
+                    (bool success, ) = msg.sender.call{value: lyxReward}("");
+                    require(success, "Executor LYX reward failed");
+                    emit DrawExecutorRewarded(msg.sender, lyxReward, drawId);
+                }
+                
+                prizeAmount = draw.nftTokenIds.length; // Number of NFTs for event
             }
             
             emit UserDrawCompleted(drawId, draw.winners, prizeAmount);
@@ -830,10 +1021,24 @@ contract GridottoFacet is IGridottoFacet {
         // Can only cancel if no tickets sold
         // This prevents any financial loss
         
-        // Refund creator if they funded the prize
-        if (draw.initialPrize > 0) {
-            (bool success, ) = draw.creator.call{value: draw.initialPrize}("");
-            require(success, "Refund failed");
+        // Refund creator based on draw type
+        if (draw.drawType == LibGridottoStorage.DrawType.USER_LYX) {
+            if (draw.initialPrize > 0) {
+                (bool success, ) = draw.creator.call{value: draw.initialPrize}("");
+                require(success, "Refund failed");
+            }
+        } else if (draw.drawType == LibGridottoStorage.DrawType.USER_LSP7) {
+            if (draw.currentPrizePool > 0) {
+                // Refund tokens to creator
+                ILSP7DigitalAsset token = ILSP7DigitalAsset(draw.tokenAddress);
+                token.transfer(address(this), draw.creator, draw.currentPrizePool, true, "");
+            }
+        } else if (draw.drawType == LibGridottoStorage.DrawType.USER_LSP8) {
+            // Return NFTs to creator
+            ILSP8IdentifiableDigitalAsset nft = ILSP8IdentifiableDigitalAsset(draw.nftAddress);
+            for (uint256 i = 0; i < draw.nftTokenIds.length; i++) {
+                nft.transfer(address(this), draw.creator, draw.nftTokenIds[i], true, "");
+            }
         }
         
         // Mark as completed/cancelled
@@ -1104,5 +1309,43 @@ contract GridottoFacet is IGridottoFacet {
         require(success, "Transfer failed");
         
         emit EmergencyWithdrawal(msg.sender, to, amount);
+    }
+
+    // Token withdrawal functions
+    function withdrawOwnerTokenProfit(address tokenAddress) external onlyOwner {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        uint256 amount = l.ownerTokenProfit[tokenAddress];
+        require(amount > 0, "No token profit to withdraw");
+        
+        l.ownerTokenProfit[tokenAddress] = 0;
+        
+        // Transfer tokens to owner
+        ILSP7DigitalAsset token = ILSP7DigitalAsset(tokenAddress);
+        token.transfer(address(this), msg.sender, amount, true, "");
+        
+        emit AdminWithdrawal(msg.sender, amount);
+    }
+    
+    function withdrawCreatorTokenProfit(address tokenAddress) external {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        uint256 amount = l.creatorTokenProfit[msg.sender][tokenAddress];
+        require(amount > 0, "No token profit to withdraw");
+        
+        l.creatorTokenProfit[msg.sender][tokenAddress] = 0;
+        
+        // Transfer tokens to creator
+        ILSP7DigitalAsset token = ILSP7DigitalAsset(tokenAddress);
+        token.transfer(address(this), msg.sender, amount, true, "");
+        
+        emit CreatorWithdrawal(msg.sender, amount);
+    }
+    
+    // View functions for token profits
+    function getOwnerTokenProfit(address tokenAddress) external view returns (uint256) {
+        return LibGridottoStorage.layout().ownerTokenProfit[tokenAddress];
+    }
+    
+    function getCreatorTokenProfit(address creator, address tokenAddress) external view returns (uint256) {
+        return LibGridottoStorage.layout().creatorTokenProfit[creator][tokenAddress];
     }
 }
