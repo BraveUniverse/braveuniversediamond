@@ -18,7 +18,7 @@ const config: HardhatUserConfig = {
   },
   networks: {
     luksoTestnet: {
-      url: process.env.LUKSO_TESTNET_RPC || "https://rpc.testnet.lukso.network",
+      url: process.env.LUKSO_TESTNET_RPC || "https://4201.rpc.thirdweb.com",
       chainId: 4201,
       accounts: process.env.PRIVATE_KEYS ? process.env.PRIVATE_KEYS.split(",").map(key => key.trim()) : [],
       gasPrice: 10000000000, // 10 gwei
