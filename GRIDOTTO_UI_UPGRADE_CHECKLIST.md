@@ -6,7 +6,7 @@ This document provides a step-by-step guide to upgrade the existing Gridotto UI 
 ---
 
 ## 🎨 Design Principles
-- **Keep existing color scheme**: Pink (#FF2E63) as primary
+- **Keep existing color scheme**: Pink (#FF2975) as primary
 - **Maintain current layout structure**
 - **Add new features without disrupting existing UX**
 - **Progressive enhancement approach**
