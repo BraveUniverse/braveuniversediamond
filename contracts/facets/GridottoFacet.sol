@@ -168,7 +168,6 @@ contract GridottoFacet is IGridottoFacet {
         payable 
         notPaused 
         nonReentrant 
-        override 
     {
         require(selectedAddresses.length > 0 && selectedAddresses.length <= MAX_BULK_BUY_ADDRESSES, 
                 "Invalid address count");
@@ -430,8 +429,127 @@ contract GridottoFacet is IGridottoFacet {
         l.monthlyDrawTime = block.timestamp + l.monthlyDrawInterval;
     }
     
+    // Official Draw Execution Functions
+    function executeDraw() external notPaused override {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        
+        require(block.timestamp >= l.drawTime, "Draw time not reached");
+        
+        uint256 drawNumber = l.currentDraw;
+        address[] storage tickets = l.drawTickets[drawNumber];
+        
+        if (tickets.length > 0) {
+            // Get random number
+            uint256 randomValue;
+            try IOracleFacet(address(this)).getRandomNumber() returns (uint256 value) {
+                randomValue = value;
+            } catch {
+                // Fallback to pseudo-random
+                randomValue = uint256(keccak256(abi.encodePacked(
+                    block.timestamp,
+                    block.prevrandao,
+                    drawNumber,
+                    tickets.length
+                )));
+            }
+            
+            uint256 winnerIndex = randomValue % tickets.length;
+            address winner = tickets[winnerIndex];
+            
+            l.winners[drawNumber] = winner;
+            
+            // Calculate prize and executor reward
+            uint256 prizeAmount = l.drawPrizes[drawNumber];
+            uint256 fivePercent = (prizeAmount * 5) / 100;
+            uint256 maxReward = 5 ether; // 5 LYX max
+            uint256 executorReward = fivePercent > maxReward ? maxReward : fivePercent;
+            prizeAmount -= executorReward;
+            
+            // Add to pending prizes
+            l.pendingPrizes[winner] += prizeAmount;
+            
+            // Reward executor
+            if (executorReward > 0) {
+                (bool success, ) = msg.sender.call{value: executorReward}("");
+                require(success, "Executor reward failed");
+                emit DrawExecutorRewarded(msg.sender, executorReward, drawNumber);
+            }
+            
+            // Keep 10% for next draw
+            uint256 carryOver = l.drawPrizes[drawNumber] / 10;
+            l.currentDrawPrizePool = carryOver;
+            
+            emit DrawExecuted(drawNumber, winner, prizeAmount, 0);
+        } else {
+            emit DrawExecuted(drawNumber, address(0), 0, 0);
+        }
+        
+        // Increment draw number and reset timer
+        l.currentDraw++;
+        l.drawTime = block.timestamp + l.drawInterval;
+    }
+    
+    function executeMonthlyDraw() external notPaused override {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        
+        require(block.timestamp >= l.monthlyDrawTime, "Monthly draw time not reached");
+        
+        uint256 drawNumber = l.currentMonthlyDraw;
+        address[] storage tickets = l.monthlyDrawTickets[drawNumber];
+        
+        if (tickets.length > 0) {
+            // Get random number
+            uint256 randomValue;
+            try IOracleFacet(address(this)).getRandomNumber() returns (uint256 value) {
+                randomValue = value;
+            } catch {
+                // Fallback to pseudo-random
+                randomValue = uint256(keccak256(abi.encodePacked(
+                    block.timestamp,
+                    block.prevrandao,
+                    drawNumber + 1000000, // Different seed than daily
+                    tickets.length
+                )));
+            }
+            
+            uint256 winnerIndex = randomValue % tickets.length;
+            address winner = tickets[winnerIndex];
+            
+            l.monthlyWinners[drawNumber] = winner;
+            
+            // Calculate prize and executor reward
+            uint256 prizeAmount = l.monthlyDrawPrizes[drawNumber];
+            uint256 fivePercent = (prizeAmount * 5) / 100;
+            uint256 maxReward = 5 ether; // 5 LYX max
+            uint256 executorReward = fivePercent > maxReward ? maxReward : fivePercent;
+            prizeAmount -= executorReward;
+            
+            // Add to pending prizes
+            l.pendingPrizes[winner] += prizeAmount;
+            
+            // Reward executor
+            if (executorReward > 0) {
+                (bool success, ) = msg.sender.call{value: executorReward}("");
+                require(success, "Executor reward failed");
+                emit DrawExecutorRewarded(msg.sender, executorReward, drawNumber + 1000000);
+            }
+            
+            // Keep 10% for next draw
+            uint256 carryOver = l.monthlyDrawPrizes[drawNumber] / 10;
+            l.monthlyPrizePool = carryOver;
+            
+            emit MonthlyDrawExecuted(drawNumber, winner, prizeAmount);
+        } else {
+            emit MonthlyDrawExecuted(drawNumber, address(0), 0);
+        }
+        
+        // Increment draw number and reset timer
+        l.currentMonthlyDraw++;
+        l.monthlyDrawTime = block.timestamp + l.monthlyDrawInterval;
+    }
+    
     // View functions
-    function getCurrentDrawInfo() external view override returns (
+    function getCurrentDrawInfo() external view returns (
         uint256 drawNumber,
         uint256 prizePool,
         uint256 ticketsSold,
@@ -444,18 +562,7 @@ contract GridottoFacet is IGridottoFacet {
         drawTime = l.drawTime;
     }
     
-    function getMonthlyDrawInfo() external view override returns (
-        uint256 drawNumber,
-        uint256 prizePool,
-        uint256 ticketsSold,
-        uint256 drawTime
-    ) {
-        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
-        drawNumber = l.currentMonthlyDraw;
-        prizePool = l.monthlyPrizePool;
-        ticketsSold = l.monthlyDrawTickets[drawNumber].length;
-        drawTime = l.monthlyDrawTime;
-    }
+
     
     // Manual draw functions
     function manualDraw() external onlyOwner {
@@ -472,21 +579,21 @@ contract GridottoFacet is IGridottoFacet {
         LibGridottoStorage.layout().ticketPrice = newPrice;
     }
     
-    function setDrawIntervals(uint256 daily, uint256 monthly) external onlyOwner override {
+    function setDrawIntervals(uint256 daily, uint256 monthly) external onlyOwner {
         require(daily > MIN_TIME_BUFFER && monthly > MIN_TIME_BUFFER, "Intervals too short");
         LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
         l.drawInterval = daily;
         l.monthlyDrawInterval = monthly;
     }
     
-    function setFeePercentages(uint256 ownerFee, uint256 monthlyPoolFee) external onlyOwner override {
+    function setFeePercentages(uint256 ownerFee, uint256 monthlyPoolFee) external onlyOwner {
         require(ownerFee + monthlyPoolFee <= 30, "Total fees too high");
         LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
         l.ownerFeePercent = ownerFee;
         l.monthlyPoolPercent = monthlyPoolFee;
     }
     
-    function setPaused(bool paused) external onlyOwner override {
+    function setPaused(bool paused) external onlyOwner {
         LibGridottoStorage.layout().paused = paused;
     }
     
@@ -916,12 +1023,86 @@ contract GridottoFacet is IGridottoFacet {
         
         if (block.timestamp < l.monthlyDrawTime) return 0;
         
-        uint256 prizeAmount = l.monthlyPrizes[l.currentMonthlyDraw];
+        uint256 prizeAmount = l.monthlyDrawPrizes[l.currentMonthlyDraw];
         if (prizeAmount == 0) return 0;
         
         uint256 fivePercent = (prizeAmount * 5) / 100;
         uint256 maxReward = 5 ether; // 5 LYX max
         
         return fivePercent > maxReward ? maxReward : fivePercent;
+    }
+
+    // Legacy View Functions
+    function getDrawInfo() external view override returns (uint256 drawNumber, uint256 endTime, uint256 prize, uint256 ticketsSold) {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        drawNumber = l.currentDraw;
+        endTime = l.drawTime;
+        prize = l.drawPrizes[drawNumber];
+        ticketsSold = l.drawTickets[drawNumber].length;
+    }
+    
+    function getMonthlyDrawInfo() external view override returns (uint256 drawNumber, uint256 endTime, uint256 prize, uint256 ticketsSold) {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        drawNumber = l.currentMonthlyDraw;
+        endTime = l.monthlyDrawTime;
+        prize = l.monthlyDrawPrizes[drawNumber];
+        ticketsSold = l.monthlyDrawTickets[drawNumber].length;
+    }
+    
+    function getUserTicketCount(address user, uint256 drawNumber) external view override returns (uint256) {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        uint256 count = 0;
+        address[] storage tickets = l.drawTickets[drawNumber];
+        for (uint256 i = 0; i < tickets.length; i++) {
+            if (tickets[i] == user) count++;
+        }
+        return count;
+    }
+    
+    function getWinner(uint256 drawNumber) external view override returns (address) {
+        return LibGridottoStorage.layout().winners[drawNumber];
+    }
+    
+    function getMonthlyWinner(uint256 drawNumber) external view override returns (address) {
+        return LibGridottoStorage.layout().monthlyWinners[drawNumber];
+    }
+    
+    // Admin Functions
+    function pause() external onlyOwner override {
+        LibGridottoStorage.layout().paused = true;
+    }
+    
+    function unpause() external onlyOwner override {
+        LibGridottoStorage.layout().paused = false;
+    }
+    
+    function setDrawInterval(uint256 newInterval) external onlyOwner override {
+        require(newInterval >= 1 hours, "Interval too short");
+        LibGridottoStorage.layout().drawInterval = newInterval;
+    }
+    
+    function setMonthlyDrawInterval(uint256 newInterval) external onlyOwner override {
+        require(newInterval >= 1 days, "Interval too short");
+        LibGridottoStorage.layout().monthlyDrawInterval = newInterval;
+    }
+    
+    function setOwnerFeePercent(uint256 newPercent) external onlyOwner override {
+        require(newPercent <= 20, "Fee too high");
+        LibGridottoStorage.layout().ownerFeePercent = newPercent;
+    }
+    
+    function setMonthlyPoolPercent(uint256 newPercent) external onlyOwner override {
+        require(newPercent <= 30, "Percent too high");
+        LibGridottoStorage.layout().monthlyPoolPercent = newPercent;
+    }
+    
+    function emergencyWithdraw(address to, uint256 amount) external onlyOwner override {
+        require(to != address(0), "Invalid address");
+        require(amount <= address(this).balance, "Insufficient balance");
+        
+        (bool success, ) = to.call{value: amount}("");
+        require(success, "Transfer failed");
+        
+        emit EmergencyWithdrawal(msg.sender, to, amount);
     }
 }
