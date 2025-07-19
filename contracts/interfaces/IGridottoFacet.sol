@@ -91,6 +91,9 @@ interface IGridottoFacet {
     function getUserParticipatedDraws(address user) external view returns (uint256[] memory);
     function getDrawWinners(uint256 drawId) external view returns (address[] memory);
     function canExecuteDraw(uint256 drawId) external view returns (bool);
+    function getExecutorReward(uint256 drawId) external view returns (uint256);
+    function getOfficialDrawExecutorReward() external view returns (uint256);
+    function getMonthlyDrawExecutorReward() external view returns (uint256);
     
     // Official Draw Functions (Legacy)
     function buyTicket(address profile) external payable;

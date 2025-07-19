@@ -675,7 +675,9 @@ contract GridottoFacet is IGridottoFacet {
             
             // Calculate prize and executor reward
             uint256 prizeAmount = draw.currentPrizePool;
-            uint256 executorReward = (prizeAmount * 5) / 100; // 5% for executor
+            uint256 fivePercent = (prizeAmount * 5) / 100;
+            uint256 maxReward = 5 ether; // 5 LYX max
+            uint256 executorReward = fivePercent > maxReward ? maxReward : fivePercent;
             prizeAmount -= executorReward;
             
             // Platform already took 5% fee during ticket sales
@@ -877,5 +879,49 @@ contract GridottoFacet is IGridottoFacet {
         
         // Can execute if time passed OR max tickets sold
         return (block.timestamp >= draw.endTime || draw.ticketsSold == draw.maxTickets);
+    }
+
+    // Calculate executor reward (5% of prize pool, max 5 LYX)
+    function getExecutorReward(uint256 drawId) external view override returns (uint256) {
+        LibGridottoStorage.UserDraw storage draw = LibGridottoStorage.layout().userDraws[drawId];
+        
+        if (draw.creator == address(0) || draw.isCompleted) return 0;
+        if (draw.participants.length == 0) return 0;
+        if (block.timestamp < draw.endTime && draw.ticketsSold < draw.maxTickets) return 0;
+        
+        uint256 fivePercent = (draw.currentPrizePool * 5) / 100;
+        uint256 maxReward = 5 ether; // 5 LYX max
+        
+        return fivePercent > maxReward ? maxReward : fivePercent;
+    }
+    
+    // Get executor reward for official draws
+    function getOfficialDrawExecutorReward() external view override returns (uint256) {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        
+        if (block.timestamp < l.drawTime) return 0;
+        
+        uint256 prizeAmount = l.drawPrizes[l.currentDraw];
+        if (prizeAmount == 0) return 0;
+        
+        uint256 fivePercent = (prizeAmount * 5) / 100;
+        uint256 maxReward = 5 ether; // 5 LYX max
+        
+        return fivePercent > maxReward ? maxReward : fivePercent;
+    }
+    
+    // Get executor reward for monthly draws
+    function getMonthlyDrawExecutorReward() external view override returns (uint256) {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        
+        if (block.timestamp < l.monthlyDrawTime) return 0;
+        
+        uint256 prizeAmount = l.monthlyPrizes[l.currentMonthlyDraw];
+        if (prizeAmount == 0) return 0;
+        
+        uint256 fivePercent = (prizeAmount * 5) / 100;
+        uint256 maxReward = 5 ether; // 5 LYX max
+        
+        return fivePercent > maxReward ? maxReward : fivePercent;
     }
 }
