@@ -1,5 +1,7 @@
 {
   "core": ["BraveUniverseDiamond", "DiamondCutFacet", "DiamondLoupeFacet"],
   "ownership": ["OwnershipFacet"],
-  "infrastructure": ["OracleFacet"]
+  "infrastructure": ["OracleFacet"],
+  "gridotto": ["GridottoFacet", "GridottoPhase3Facet", "GridottoPhase4Facet"],
+  "admin": ["AdminFacet"]
 }

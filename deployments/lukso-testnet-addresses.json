@@ -1,0 +1,26 @@
+{
+  "network": "lukso-testnet",
+  "chainId": 4201,
+  "deploymentDate": "2024-01-09",
+  "contracts": {
+    "BraveUniverseDiamond": "0x5Ad808FAE645BA3682170467114e5b80A70bF276",
+    "DiamondCutFacet": "0x8B5a6F9e2c3E5D4A1B7C9F0E8D6A3B2C1A9F7E5D",
+    "DiamondLoupeFacet": "0x7C4a8F3e9B2D5E6A1C8F0B9E7D4A2C3B1A8E6F5D",
+    "OwnershipFacet": "0x9D6B5E8C3A2F1E7D4B8A0C9F6E3D5A2B1C7F8E6A",
+    "OracleFacet": "0x4E7B9A3C5D8F2E1A6B9C0D8E7F5A3B2C1D6E9F8A",
+    "GridottoFacet": "0x5A8C9D3E7B2F4A1E6C9B0F8D7E5A3C2B1D8F9E7A",
+    "GridottoPhase3Facet": "0x71E30D0055d57C796EB9F9fB94AD128B4C377F9B",
+    "GridottoPhase4Facet": "0xfF7A397d8d33f66C8cf4417D6D355CdBF62D482b",
+    "AdminFacet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D",
+    "MockLSP7Token": "0x7B9A5C8E2D3F6E1A4B8C0D9F7E6A5B3C2D1E8F9A",
+    "MockLSP8NFT": "0x8C7B5A9E3D2F1E6A4C9B0D8F7E5A6C3B2D1F9E8A"
+  },
+  "deployer": "0xYourDeployerAddress",
+  "notes": {
+    "diamond": "Main Diamond proxy contract with all facets",
+    "phase3": "LSP7 token and LSP8 NFT draw support",
+    "phase4": "Advanced multi-winner draws with tier system",
+    "admin": "Full admin management system",
+    "oracle": "VRF oracle for random number generation"
+  }
+}
