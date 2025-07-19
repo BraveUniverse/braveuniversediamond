@@ -45,6 +45,14 @@ library LibGridottoStorage {
         PrizeTier[] tiers;
         uint256 totalWinners;
     }
+    
+    struct UserStats {
+        uint256 totalDrawsCreated;
+        uint256 totalParticipations;
+        uint256 totalWins;
+        uint256 totalSpent;
+        uint256 totalWon;
+    }
 
     struct UserDraw {
         address creator;
@@ -149,6 +157,32 @@ library LibGridottoStorage {
         // Creator profit tracking  
         mapping(address => uint256) creatorProfit;
         mapping(address => mapping(address => uint256)) creatorTokenProfit; // creator => token => amount
+        
+        // Admin configurations
+        uint256 platformFeePercent; // Default 5%
+        uint256 executorRewardPercent; // Default 5%
+        uint256 maxExecutorReward; // Default 5 LYX
+        uint256 maxTicketsPerDraw; // Default 100000
+        uint256 minDrawDuration; // Default 1 hour
+        uint256 minParticipants; // Default 1
+        
+        // Access control
+        mapping(address => bool) blacklisted;
+        mapping(address => bool) banned;
+        mapping(address => uint256) userDrawLimit; // Per user draw creation limit
+        uint256 globalDrawLimit; // Global draw limit per user
+        
+        // Statistics
+        uint256 totalPlatformVolume;
+        uint256 totalCompletedDraws;
+        mapping(address => uint256) tokenVolume; // token => volume
+        mapping(address => UserStats) userStats;
+        
+        // Feature toggles
+        mapping(string => bool) features;
+        
+        // VIP configurations
+        mapping(uint8 => uint256) vipBonusTickets; // tier => bonus percent
     }
 
     function layout() internal pure returns (Layout storage l) {
