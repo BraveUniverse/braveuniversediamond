@@ -1,0 +1,33 @@
+{
+  "facet": "GridottoFacet",
+  "status": "TEST_READY",
+  "phase": "Phase 1 - Official Draws",
+  "progress": {
+    "phase1": {
+      "completed": 9,
+      "total": 12,
+      "percentage": 75
+    },
+    "phase2": {
+      "completed": 0,
+      "total": 10,
+      "percentage": 0
+    },
+    "phase3": {
+      "completed": 0,
+      "total": 5,
+      "percentage": 0
+    }
+  },
+  "features": {
+    "officialDraws": "implemented",
+    "userDraws": "not_started",
+    "tokenSupport": "not_started",
+    "nftSupport": "not_started"
+  },
+  "dependencies": [
+    "OracleFacet",
+    "VIPPass (external)"
+  ],
+  "notes": "Phase 1 implements legacy Gridotto functionality. User draws will be added in Phase 2."
+}
