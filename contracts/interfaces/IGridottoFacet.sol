@@ -54,6 +54,21 @@ interface IGridottoFacet {
     function executeUserDraw(uint256 drawId) external;
     function cancelUserDraw(uint256 drawId) external;
     
+    // Phase 4: Advanced draw creation with multi-winner
+    function createAdvancedDraw(
+        LibGridottoStorage.DrawType drawType,
+        address assetAddress, // token or NFT address
+        uint256 assetAmount, // amount for tokens, 0 for NFTs
+        bytes32[] memory nftIds, // empty for token draws
+        LibGridottoStorage.DrawPrizeConfig memory prizeConfig,
+        uint256 ticketPrice,
+        uint256 duration,
+        uint256 maxTickets,
+        LibGridottoStorage.ParticipationRequirement requirement,
+        uint256 minFollowerCount,
+        LibGridottoStorage.MultiWinnerConfig memory winnerConfig
+    ) external payable returns (uint256 drawId);
+    
     // User Draw View Functions
     function getUserDraw(uint256 drawId) external view returns (
         address creator,

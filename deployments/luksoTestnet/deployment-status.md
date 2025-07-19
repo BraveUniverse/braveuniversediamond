@@ -31,11 +31,49 @@
 - [x] Mock LSP7/LSP8 contracts for testing
 - [x] Executor rewards for token/NFT draws
 
-## Phase 4: Advanced Features (Pending)
-- [ ] Social features (follower requirements)
-- [ ] Multi-winner draws
-- [ ] Advanced prize distribution models
-- [ ] Mainnet deployment
+## Phase 4: Advanced Features ✅
+- [x] Multi-winner system with customizable tiers
+- [x] Tier-based prize distribution (1st: 50%, 2nd: 30%, 3rd: 20%, etc.)
+- [x] Specific NFT assignment per tier (Gold, Silver, Bronze)
+- [x] LSP26 Follower System integration (mainnet ready)
+- [x] Advanced draw creation with full customization
+- [x] Support for all draw types (LYX, LSP7, LSP8)
+- [x] Flexible participation requirements
+- [ ] Mainnet deployment (ready)
+
+## Latest Updates (Phase 4)
+
+### New Features:
+1. **Multi-Winner System**:
+   - Fully customizable tier configuration
+   - Support for 1-100+ winners per draw
+   - Percentage-based prize distribution
+   - Each tier can have different winner counts
+
+2. **Advanced NFT Distribution**:
+   - Specific NFT assignment per tier
+   - Example: Gold NFT for 1st, Silver for 2nd, Bronze for 3rd
+   - Automatic distribution to multiple winners
+   - Support for collections with different rarities
+
+3. **LSP26 Follower Integration**:
+   - Minimum follower count requirements
+   - Must follow creator requirement
+   - Combined with token/NFT requirements
+   - Ready for mainnet deployment
+
+4. **createAdvancedDraw() Function**:
+   - Single function for all draw types
+   - Full customization of all parameters
+   - Backward compatible with simple draws
+   - Gas optimized for complex configurations
+
+### Example Configurations:
+- **Classic Lottery**: 1 winner takes all
+- **Tiered Prizes**: 1st (50%), 2nd (30%), 3rd (20%)
+- **Many Winners**: 100 winners each get 1%
+- **NFT Tiers**: Rare NFT for 1st, Common for others
+- **Social Gated**: Require 1000+ followers to participate
 
 ## Latest Updates (Phase 3)
 

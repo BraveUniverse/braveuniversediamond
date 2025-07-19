@@ -33,6 +33,18 @@ library LibGridottoStorage {
         bool addParticipationFees;
         uint256 participationFeePercent;
     }
+    
+    struct PrizeTier {
+        uint256 winnersCount;     // Number of winners in this tier
+        uint256 prizePercent;     // Percentage of prize pool for this tier
+        bytes32[] specificNFTIds; // For NFT draws: specific NFTs for this tier
+    }
+    
+    struct MultiWinnerConfig {
+        bool enabled;
+        PrizeTier[] tiers;
+        uint256 totalWinners;
+    }
 
     struct UserDraw {
         address creator;
@@ -62,6 +74,10 @@ library LibGridottoStorage {
         ParticipationRequirement requirement;
         address requiredToken;
         uint256 minTokenAmount;
+        uint256 minFollowerCount; // For LSP26
+        
+        // Multi-winner configuration
+        MultiWinnerConfig winnerConfig;
         
         // Status
         uint256 startTime;
@@ -122,6 +138,9 @@ library LibGridottoStorage {
         // VIP Pass
         address vipPassAddress;
         mapping(uint8 => uint256) vipTierFeeDiscount;
+        
+        // LSP26 Follower System (mainnet only)
+        address lsp26Address;
         
         // Security
         bool paused;

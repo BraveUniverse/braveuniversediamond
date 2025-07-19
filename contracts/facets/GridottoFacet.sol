@@ -7,6 +7,7 @@ import "../libs/LibDiamond.sol";
 import "../interfaces/IOracleFacet.sol";
 import "../interfaces/ILSP7DigitalAsset.sol";
 import "../interfaces/ILSP8IdentifiableDigitalAsset.sol";
+import "../interfaces/ILSP26FollowerSystem.sol";
 
 interface ILSP7 {
     function transfer(address from, address to, uint256 amount, bool force, bytes memory data) external;
@@ -251,8 +252,22 @@ contract GridottoFacet is IGridottoFacet {
         } else if (draw.requirement == LibGridottoStorage.ParticipationRequirement.FOLLOWERS_ONLY ||
                    draw.requirement == LibGridottoStorage.ParticipationRequirement.FOLLOWERS_AND_LSP7 ||
                    draw.requirement == LibGridottoStorage.ParticipationRequirement.FOLLOWERS_AND_LSP8) {
-            // This would require integration with social features
-            // For now, we'll skip follower checks
+            // Check follower requirement if set
+            if (draw.minFollowerCount > 0) {
+                // Note: LSP26 is only on mainnet, so we check if contract exists
+                address lsp26Address = LibGridottoStorage.layout().lsp26Address;
+                if (lsp26Address != address(0)) {
+                    ILSP26FollowerSystem followerSystem = ILSP26FollowerSystem(lsp26Address);
+                    require(
+                        followerSystem.isFollowing(participant, draw.creator),
+                        "Must follow creator"
+                    );
+                    require(
+                        followerSystem.followerCount(participant) >= draw.minFollowerCount,
+                        "Insufficient followers"
+                    );
+                }
+            }
             
             // Check additional requirements
             if (draw.requirement == LibGridottoStorage.ParticipationRequirement.FOLLOWERS_AND_LSP7) {
@@ -315,12 +330,119 @@ contract GridottoFacet is IGridottoFacet {
         return draw.participants[0];
     }
     
+    function _selectMultipleWinners(LibGridottoStorage.UserDraw storage draw, uint256 randomValue) internal {
+        uint256 participantCount = draw.participants.length;
+        require(participantCount >= draw.winnerConfig.totalWinners, "Not enough participants");
+        
+        // Create array to track selected indices
+        bool[] memory selected = new bool[](participantCount);
+        uint256 winnersSelected = 0;
+        uint256 currentSeed = randomValue;
+        
+        // Select winners for each tier
+        for (uint256 tierIndex = 0; tierIndex < draw.winnerConfig.tiers.length; tierIndex++) {
+            LibGridottoStorage.PrizeTier memory tier = draw.winnerConfig.tiers[tierIndex];
+            
+            for (uint256 i = 0; i < tier.winnersCount; i++) {
+                // Generate new random index
+                uint256 attempts = 0;
+                uint256 winnerIndex;
+                
+                do {
+                    currentSeed = uint256(keccak256(abi.encodePacked(currentSeed, tierIndex, i, attempts)));
+                    winnerIndex = currentSeed % participantCount;
+                    attempts++;
+                    
+                    // Safety check to prevent infinite loop
+                    require(attempts < participantCount * 2, "Failed to select unique winners");
+                } while (selected[winnerIndex]);
+                
+                selected[winnerIndex] = true;
+                draw.winners.push(draw.participants[winnerIndex]);
+                winnersSelected++;
+            }
+        }
+        
+        require(winnersSelected == draw.winnerConfig.totalWinners, "Winner selection mismatch");
+    }
+    
     function _calculateBonusTickets(uint256 baseAmount, uint8 tier) internal pure returns (uint256) {
         if (tier == SILVER_TIER) return baseAmount >= 5 ? 1 : 0;
         if (tier == GOLD_TIER) return baseAmount >= 3 ? baseAmount / 3 : 0;
         if (tier == DIAMOND_TIER) return baseAmount >= 2 ? baseAmount / 2 : 0;
         if (tier == UNIVERSE_TIER) return baseAmount; // Double tickets
         return 0;
+    }
+    
+    function _distributeLYXPrizesToMultipleWinners(
+        LibGridottoStorage.UserDraw storage draw,
+        uint256 executorReward
+    ) internal {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        uint256 totalPrize = draw.currentPrizePool - executorReward;
+        uint256 winnerIndex = 0;
+        
+        for (uint256 tierIndex = 0; tierIndex < draw.winnerConfig.tiers.length; tierIndex++) {
+            LibGridottoStorage.PrizeTier memory tier = draw.winnerConfig.tiers[tierIndex];
+            uint256 tierPrize = (totalPrize * tier.prizePercent) / 100;
+            uint256 prizePerWinner = tierPrize / tier.winnersCount;
+            
+            for (uint256 i = 0; i < tier.winnersCount; i++) {
+                if (winnerIndex < draw.winners.length) {
+                    l.pendingPrizes[draw.winners[winnerIndex]] += prizePerWinner;
+                    winnerIndex++;
+                }
+            }
+        }
+    }
+    
+    function _distributeTokenPrizesToMultipleWinners(
+        LibGridottoStorage.UserDraw storage draw,
+        uint256 executorReward
+    ) internal {
+        ILSP7DigitalAsset token = ILSP7DigitalAsset(draw.tokenAddress);
+        uint256 totalPrize = draw.currentPrizePool - executorReward;
+        uint256 winnerIndex = 0;
+        
+        for (uint256 tierIndex = 0; tierIndex < draw.winnerConfig.tiers.length; tierIndex++) {
+            LibGridottoStorage.PrizeTier memory tier = draw.winnerConfig.tiers[tierIndex];
+            uint256 tierPrize = (totalPrize * tier.prizePercent) / 100;
+            uint256 prizePerWinner = tierPrize / tier.winnersCount;
+            
+            for (uint256 i = 0; i < tier.winnersCount; i++) {
+                if (winnerIndex < draw.winners.length) {
+                    token.transfer(address(this), draw.winners[winnerIndex], prizePerWinner, true, "");
+                    winnerIndex++;
+                }
+            }
+        }
+    }
+    
+    function _distributeNFTPrizesToMultipleWinners(
+        LibGridottoStorage.UserDraw storage draw
+    ) internal {
+        ILSP8IdentifiableDigitalAsset nft = ILSP8IdentifiableDigitalAsset(draw.nftAddress);
+        uint256 nftIndex = 0;
+        uint256 winnerIndex = 0;
+        
+        for (uint256 tierIndex = 0; tierIndex < draw.winnerConfig.tiers.length; tierIndex++) {
+            LibGridottoStorage.PrizeTier memory tier = draw.winnerConfig.tiers[tierIndex];
+            
+            // If specific NFTs are assigned to this tier
+            if (tier.specificNFTIds.length > 0) {
+                for (uint256 i = 0; i < tier.specificNFTIds.length && winnerIndex < draw.winners.length; i++) {
+                    nft.transfer(address(this), draw.winners[winnerIndex], tier.specificNFTIds[i], true, "");
+                    winnerIndex++;
+                }
+            } else {
+                // Distribute NFTs in order
+                for (uint256 i = 0; i < tier.winnersCount && nftIndex < draw.nftTokenIds.length && winnerIndex < draw.winners.length; i++) {
+                    nft.transfer(address(this), draw.winners[winnerIndex], draw.nftTokenIds[nftIndex], true, "");
+                    nftIndex++;
+                    winnerIndex++;
+                }
+            }
+        }
     }
     
     function _checkAndExecuteDraws() internal {
@@ -779,6 +901,124 @@ contract GridottoFacet is IGridottoFacet {
         emit UserDrawCreated(drawId, msg.sender, LibGridottoStorage.DrawType.USER_LSP8, LibGridottoStorage.PrizeModel.CREATOR_FUNDED);
     }
     
+    // Phase 4: Advanced draw creation with multi-winner support
+    function createAdvancedDraw(
+        LibGridottoStorage.DrawType drawType,
+        address assetAddress,
+        uint256 assetAmount,
+        bytes32[] memory nftIds,
+        LibGridottoStorage.DrawPrizeConfig memory prizeConfig,
+        uint256 ticketPrice,
+        uint256 duration,
+        uint256 maxTickets,
+        LibGridottoStorage.ParticipationRequirement requirement,
+        uint256 minFollowerCount,
+        LibGridottoStorage.MultiWinnerConfig memory winnerConfig
+    ) external payable override returns (uint256 drawId) {
+        require(ticketPrice > 0, "Ticket price must be > 0");
+        require(duration >= MIN_TIME_BUFFER, "Invalid duration");
+        require(maxTickets > 0 && maxTickets <= MAX_TICKETS_PER_DRAW, "Invalid max tickets");
+        
+        // Validate winner config
+        if (winnerConfig.enabled) {
+            require(winnerConfig.tiers.length > 0, "No tiers defined");
+            uint256 totalPercent = 0;
+            uint256 totalWinners = 0;
+            
+            for (uint256 i = 0; i < winnerConfig.tiers.length; i++) {
+                totalPercent += winnerConfig.tiers[i].prizePercent;
+                totalWinners += winnerConfig.tiers[i].winnersCount;
+                
+                // For NFT draws, validate specific NFT assignments
+                if (drawType == LibGridottoStorage.DrawType.USER_LSP8) {
+                    require(
+                        winnerConfig.tiers[i].specificNFTIds.length == 0 || 
+                        winnerConfig.tiers[i].specificNFTIds.length == winnerConfig.tiers[i].winnersCount,
+                        "NFT count mismatch in tier"
+                    );
+                }
+            }
+            
+            require(totalPercent <= 100, "Total percentage exceeds 100");
+            require(totalWinners <= maxTickets, "Total winners exceeds max tickets");
+            winnerConfig.totalWinners = totalWinners;
+        }
+        
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        drawId = l.nextDrawId++;
+        
+        LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
+        draw.creator = msg.sender;
+        draw.drawType = drawType;
+        draw.prizeConfig = prizeConfig;
+        draw.ticketPrice = ticketPrice;
+        draw.endTime = block.timestamp + duration;
+        draw.maxTickets = maxTickets;
+        draw.requirement = requirement;
+        draw.minFollowerCount = minFollowerCount;
+        draw.startTime = block.timestamp;
+        draw.winnerConfig = winnerConfig;
+        
+        // Handle different draw types
+        if (drawType == LibGridottoStorage.DrawType.USER_LYX) {
+            require(msg.value >= prizeConfig.creatorContribution, "Insufficient LYX");
+            draw.currentPrizePool = prizeConfig.creatorContribution;
+            draw.initialPrize = prizeConfig.creatorContribution;
+            
+            // Refund excess
+            if (msg.value > prizeConfig.creatorContribution) {
+                (bool success, ) = msg.sender.call{value: msg.value - prizeConfig.creatorContribution}("");
+                require(success, "Refund failed");
+            }
+        } else if (drawType == LibGridottoStorage.DrawType.USER_LSP7) {
+            require(assetAddress != address(0), "Invalid token address");
+            require(assetAmount > 0, "Invalid token amount");
+            draw.tokenAddress = assetAddress;
+            
+            // Transfer tokens based on funding model
+            if (prizeConfig.model == LibGridottoStorage.PrizeModel.CREATOR_FUNDED) {
+                ILSP7DigitalAsset token = ILSP7DigitalAsset(assetAddress);
+                token.transfer(msg.sender, address(this), assetAmount, true, "");
+                draw.currentPrizePool = assetAmount;
+            } else if (prizeConfig.model == LibGridottoStorage.PrizeModel.HYBRID_FUNDED) {
+                ILSP7DigitalAsset token = ILSP7DigitalAsset(assetAddress);
+                token.transfer(msg.sender, address(this), prizeConfig.creatorContribution, true, "");
+                draw.currentPrizePool = prizeConfig.creatorContribution;
+            }
+        } else if (drawType == LibGridottoStorage.DrawType.USER_LSP8) {
+            require(assetAddress != address(0), "Invalid NFT address");
+            require(nftIds.length > 0, "No NFTs provided");
+            draw.nftAddress = assetAddress;
+            
+            // Validate NFT count matches tier configuration
+            if (winnerConfig.enabled) {
+                uint256 totalNFTsNeeded = 0;
+                for (uint256 i = 0; i < winnerConfig.tiers.length; i++) {
+                    if (winnerConfig.tiers[i].specificNFTIds.length > 0) {
+                        totalNFTsNeeded += winnerConfig.tiers[i].specificNFTIds.length;
+                    } else {
+                        totalNFTsNeeded += winnerConfig.tiers[i].winnersCount;
+                    }
+                }
+                require(nftIds.length >= totalNFTsNeeded, "Insufficient NFTs for winners");
+            }
+            
+            // Transfer NFTs
+            ILSP8IdentifiableDigitalAsset nft = ILSP8IdentifiableDigitalAsset(assetAddress);
+            for (uint256 i = 0; i < nftIds.length; i++) {
+                require(nft.tokenOwnerOf(nftIds[i]) == msg.sender, "Not NFT owner");
+                nft.transfer(msg.sender, address(this), nftIds[i], true, "");
+                draw.nftTokenIds.push(nftIds[i]);
+            }
+        }
+        
+        l.activeUserDraws.push(drawId);
+        l.userCreatedDraws[msg.sender].push(drawId);
+        
+        emit UserDrawCreated(drawId, msg.sender, drawType, prizeConfig.model);
+        return drawId;
+    }
+    
     function buyUserDrawTicket(uint256 drawId, uint256 amount) external payable override {
         LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
         LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
@@ -921,12 +1161,18 @@ contract GridottoFacet is IGridottoFacet {
             )));
         }
         
-        // Select winner(s) - all models use single winner for now
+        // Select winner(s) based on configuration
         if (draw.participants.length > 0) {
             
-            // Single winner takes all
-            address winner = _selectWinner(draw, randomValue);
-            draw.winners.push(winner);
+            // Check if multi-winner is enabled
+            if (draw.winnerConfig.enabled && draw.winnerConfig.tiers.length > 0) {
+                // Multi-winner selection
+                _selectMultipleWinners(draw, randomValue);
+            } else {
+                // Single winner takes all
+                address winner = _selectWinner(draw, randomValue);
+                draw.winners.push(winner);
+            }
             
             // Calculate prize and executor reward
             uint256 prizeAmount = draw.currentPrizePool;
@@ -952,8 +1198,13 @@ contract GridottoFacet is IGridottoFacet {
             
             // Handle prize distribution based on draw type
             if (draw.drawType == LibGridottoStorage.DrawType.USER_LYX) {
-                // Add to winner's pending prizes
-                l.pendingPrizes[winner] += prizeAmount;
+                if (draw.winnerConfig.enabled) {
+                    // Multi-winner distribution for LYX
+                    _distributeLYXPrizesToMultipleWinners(draw, executorReward);
+                } else {
+                    // Single winner
+                    l.pendingPrizes[draw.winners[0]] += prizeAmount;
+                }
                 
                 // Reward the executor (person who called this function)
                 if (executorReward > 0) {
@@ -962,15 +1213,20 @@ contract GridottoFacet is IGridottoFacet {
                     emit DrawExecutorRewarded(msg.sender, executorReward, drawId);
                 }
             } else if (draw.drawType == LibGridottoStorage.DrawType.USER_LSP7) {
-                // For token draws, transfer tokens to winner
+                // For token draws
                 ILSP7DigitalAsset token = ILSP7DigitalAsset(draw.tokenAddress);
                 
                 // Calculate executor reward in tokens (5% no max limit)
                 uint256 tokenExecutorReward = (draw.currentPrizePool * 5) / 100;
                 
-                // Transfer prize to winner
-                uint256 winnerPrize = draw.currentPrizePool - tokenExecutorReward;
-                token.transfer(address(this), winner, winnerPrize, true, "");
+                if (draw.winnerConfig.enabled) {
+                    // Multi-winner distribution for tokens
+                    _distributeTokenPrizesToMultipleWinners(draw, tokenExecutorReward);
+                } else {
+                    // Single winner
+                    uint256 winnerPrize = draw.currentPrizePool - tokenExecutorReward;
+                    token.transfer(address(this), draw.winners[0], winnerPrize, true, "");
+                }
                 
                 // Transfer executor reward
                 if (tokenExecutorReward > 0) {
@@ -978,13 +1234,18 @@ contract GridottoFacet is IGridottoFacet {
                     emit DrawExecutorRewarded(msg.sender, tokenExecutorReward, drawId);
                 }
                 
-                prizeAmount = winnerPrize; // For event
+                prizeAmount = draw.currentPrizePool - tokenExecutorReward; // For event
             } else if (draw.drawType == LibGridottoStorage.DrawType.USER_LSP8) {
-                // For NFT draws, transfer all NFTs to winner
-                ILSP8IdentifiableDigitalAsset nft = ILSP8IdentifiableDigitalAsset(draw.nftAddress);
-                
-                for (uint256 i = 0; i < draw.nftTokenIds.length; i++) {
-                    nft.transfer(address(this), winner, draw.nftTokenIds[i], true, "");
+                // For NFT draws
+                if (draw.winnerConfig.enabled) {
+                    // Multi-winner distribution for NFTs
+                    _distributeNFTPrizesToMultipleWinners(draw);
+                } else {
+                    // Single winner gets all NFTs
+                    ILSP8IdentifiableDigitalAsset nft = ILSP8IdentifiableDigitalAsset(draw.nftAddress);
+                    for (uint256 i = 0; i < draw.nftTokenIds.length; i++) {
+                        nft.transfer(address(this), draw.winners[0], draw.nftTokenIds[i], true, "");
+                    }
                 }
                 
                 // NFT draws don't have executor rewards
