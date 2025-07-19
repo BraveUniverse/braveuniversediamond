@@ -1,122 +1,101 @@
 ---
+description: Rules and best practices for safely handling function selectors in BraveUniverse facets.
+globs:
+  - "**/*.ts"
+  - "**/*.js"
+  - "**/*.sol"
+mode: always
+---
 
 # FUNCTION SELECTOR RULES
 
-Function selector hesaplama hatalarını önlemek için kritik kurallar.
+Critical rules to avoid incorrect selector computation and deployment errors.
 
-## YASAK YÖNTEMLER ❌
+## ❌ FORBIDDEN PRACTICES
 
-### Manual Hash Hesaplama
-```javascript
-// ❌ YANLIŞ - Node.js crypto ile manuel hesaplama
+### Manual Hash Calculation
+
+```ts
+// ❌ WRONG – Manual selector using Node.js crypto
 const crypto = require('crypto');
 const hash = crypto.createHash('sha3-256').update('getGreeting()').digest('hex');
-const selector = '0x' + hash.slice(0, 8); // YANLIŞ SONUÇ!
-```
-
-### Hardcoded Selectors
-```typescript
-// ❌ YANLIŞ - Manuel olarak tahmin edilen selectorlar
+const selector = '0x' + hash.slice(0, 8); // ❌ Incorrect result!
+Hardcoded Selectors
+// ❌ WRONG – Manually written selectors
 const testFacetSelectors = [
-  "0x76a631c0", // getGreeting() - YANLIŞ!
-  "0x62738998", // getCallerInfo() - YANLIŞ!
+  "0x76a631c0", // getGreeting() – ❌ Wrong!
+  "0x62738998", // getCallerInfo() – ❌ Wrong!
 ];
-```
+✅ CORRECT METHODS
 
-## DOĞRU YÖNTEMLER ✅
-
-### 1. Hardhat Contract Interface Kullanımı
-```typescript
-// ✅ DOĞRU - Hardhat Contract Factory interface
+1. Use Hardhat Contract Interface
 const TestFacet = await ethers.getContractFactory("TestFacet");
 const iface = TestFacet.interface;
-
 const selector = iface.getFunction("getGreeting")?.selector;
-console.log("Correct selector:", selector); // 0xfe50cc72
-```
-
-### 2. Otomatik Selector Collection
-```typescript
-// ✅ DOĞRU - Tüm fonksiyonlar için otomatik toplama
+console.log("Correct selector:", selector); // ✅ 0xfe50cc72
+2. Auto-collect Selectors
 const TestFacet = await ethers.getContractFactory("TestFacet");
 const iface = TestFacet.interface;
 
-const functions = ["getGreeting", "getCallerInfo", "getSecretMessage", "getMagicNumber"];
+const functions = ["getGreeting", "getCallerInfo"];
 const selectors: string[] = [];
 
 functions.forEach(funcName => {
   const selector = iface.getFunction(funcName)?.selector;
-  if (selector) {
-    selectors.push(selector);
-  }
+  if (selector) selectors.push(selector);
 });
-```
-
-### 3. Helper Script ile Verification
-```typescript
-// ✅ DOĞRU - Selector doğrulama scripti
+3. Selector Verifier Script
 async function getCorrectSelectors(contractName: string, functionNames: string[]) {
   const Contract = await ethers.getContractFactory(contractName);
   const iface = Contract.interface;
-  
+
   const selectors: string[] = [];
   functionNames.forEach(funcName => {
     const selector = iface.getFunction(funcName)?.selector;
     if (selector) {
-      console.log(`  ${funcName}(): ${selector}`);
+      console.log(`${funcName}(): ${selector}`);
       selectors.push(selector);
     }
   });
-  
+
   return selectors;
 }
-```
+🔍 TROUBLESHOOTING
 
-## HATA TESPİTİ 🔍
+Diamond “Function does not exist” Error
 
-### Diamond'da "Function does not exist" Hatası
-Bu hata genellikle yanlış selector kullanımından kaynaklanır:
-
-```
+Typical error caused by wrong selectors:
 ❌ execution reverted: BraveUniverseDiamond: Function does not exist
-```
-
-**Çözüm:**
-1. Selector'ları hardhat interface ile tekrar hesapla
-2. Diamond'daki mevcut selector'ları kontrol et
-3. Yanlış selector'ları kaldır, doğrularını ekle
-
-### Verification Komutu
-```bash
-# Diamond'daki mevcut selector'ları kontrol et
+Fix:
+	1.	Recalculate selectors with Hardhat
+	2.	Check existing selectors on Diamond
+	3.	Remove invalid selectors, re-add correct ones
+Verify Selectors on Diamond
 npx hardhat run scripts/verify-diamond.ts --network luksoTestnet
-```
-
-## WORKFLOW 📋
-
-### Yeni Facet Ekleme Süreci
-1. **Contract yazmadan önce**: Fonksiyon isimlerini planla
-2. **Contract yazdıktan sonra**: Compile et
-3. **Selector hesapla**: Hardhat interface kullan
-4. **DiamondCut hazırla**: Doğru selector'larla
-5. **Test et**: Ekleme sonrası fonksiyonları çağır
-6. **Verify et**: Diamond verification script çalıştır
-
-### Acil Durum Temizleme
-```typescript
-// Yanlış selector'ları temizlemek için
-const removeDiamondCut = [{
+Emergency Selector Cleanup
+const removeCut = [{
   facetAddress: ethers.ZeroAddress,
   action: 2, // Remove
-  functionSelectors: ["0xYANLIS_SELECTOR1", "0xYANLIS_SELECTOR2"]
+  functionSelectors: ["0xBAD_SELECTOR"]
 }];
-```
 
-## ÖNEMLI NOTLAR ⚠️
+📋 WORKFLOW
 
-- Node.js `crypto.createHash('sha3-256')` **Ethereum keccak256 ile aynı değil**
-- Manuel hesaplama **asla güvenilir değil**
-- Hardhat interface **her zaman doğru sonuç verir**
-- Selector çakışması durumunda Diamond **ilk eklenen fonksiyonu kullanır**
+New Facet Procedure
+	1.	Plan function names first
+	2.	Write contract & compile
+	3.	Use interface to extract selectors
+	4.	Prepare diamondCut with correct selectors
+	5.	Run full test suite
+	6.	Verify deployment
 
-✅ **KURAL**: Selector hesaplamada sadece Hardhat Contract Interface kullan!
+⚠️ IMPORTANT NOTES
+	•	crypto.createHash('sha3-256') is NOT the same as Ethereum keccak256
+	•	NEVER rely on manual selector calculation
+	•	Hardhat interface is the ONLY safe method
+	•	On conflict, Diamond uses the first added selector
+
+✅ RULE: Always use Hardhat’s Contract.interface to generate function selectors!
+
+
+
