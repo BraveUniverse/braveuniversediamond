@@ -148,6 +148,26 @@ Following BraveUniverse development rules:
 - **Access Control Testing** - Explicit permission checks
 - **Documentation** - English + Turkish docs required
 
+### ⚠️ Function Selector Rules
+
+**CRITICAL**: Always use Hardhat interface for function selectors!
+
+```typescript
+// ❌ WRONG - Manual calculation
+const crypto = require('crypto');
+const hash = crypto.createHash('sha3-256').update('getGreeting()').digest('hex');
+
+// ✅ CORRECT - Hardhat interface
+const Contract = await ethers.getContractFactory("TestFacet");
+const selector = Contract.interface.getFunction("getGreeting")?.selector;
+```
+
+**Helper Script:**
+```bash
+# Get correct function selectors
+npx hardhat run scripts/helpers/get-selectors-helper.ts
+```
+
 ## 🎮 BraveUniverse Ecosystem
 
 This diamond serves as the foundation for BraveUniverse game mechanics:

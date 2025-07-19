@@ -35,6 +35,15 @@ mode: always
 - Leaving dev `console.log()` in BUILD_READY commits.
 - Commented-out dead code not removed.
 
+## 🎯 Function Selector Issues
+- Using manual hash calculation instead of Hardhat interface for selectors.
+- Node.js `crypto.createHash('sha3-256')` ≠ Ethereum keccak256.
+- Hardcoded/guessed selector values without verification.
+- Diamond "Function does not exist" errors from wrong selectors.
+- Selector collisions between different facets.
+
+**Fix**: Always use `contractFactory.interface.getFunction(name)?.selector`
+
 # POLICY
 When a new error occurs during development or test failure:
 - Add a new item to this file with the category, pattern, and fix.
