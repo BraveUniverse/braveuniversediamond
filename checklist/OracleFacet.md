@@ -7,8 +7,8 @@
 - [x] Access control testleri tamamlandı
 - [x] Multi-user simülasyon testleri yazıldı
 - [x] Tüm testler geçildi (Hardhat + testnet)
-- [ ] ABI oluşturuldu `/abis` altına eklendi
+- [x] ABI oluşturuldu `/abis` altına eklendi
 - [x] `FacetMap` güncellendi
 - [x] `facet-status` JSON yazıldı
 - [x] Türkçe ve İngilizce dökümantasyon hazırlandı
-- [ ] BUILD_READY olarak işaretlendi
+- [x] BUILD_READY olarak işaretlendi

@@ -1,10 +1,10 @@
 {
   "facet": "OracleFacet",
-  "status": "TEST_READY",
+  "status": "BUILD_READY",
   "testCoverage": 100,
   "multiUserTested": true,
-  "checklistComplete": false,
+  "checklistComplete": true,
   "gasSnapshotTakenAt": "2025-07-19T00:15:00Z",
-  "abiGenerated": false,
+  "abiGenerated": true,
   "facetMapLinked": true
 }

@@ -1,0 +1,18 @@
+[
+  "event BackupRandomnessToggled(bool enabled)",
+  "event OracleAddressChanged(address oldAddress, address newAddress)",
+  "event OracleMethodIDChanged(bytes32 oldMethodID, bytes32 newMethodID)",
+  "event OracleValueUpdated(uint256 value, uint256 timestamp)",
+  "function forceUpdateOracle() returns (uint256)",
+  "function getGameRandomNumber(bytes32 gameId, uint256 roundNumber, address player) returns (uint256)",
+  "function getOracleAge() view returns (uint256)",
+  "function getOracleData() view returns (address oracleAddress, bytes32 methodId, bool useBackupRandomness, uint256 lastValue, uint256 lastTimestamp)",
+  "function getRandomInRange(uint256 min, uint256 max) returns (uint256)",
+  "function getRandomNumber() returns (uint256)",
+  "function getRandomNumberWithSeed(bytes32 seed) returns (uint256)",
+  "function initializeOracle()",
+  "function setOracleAddress(address newOracleAddress)",
+  "function setOracleMethodID(bytes32 newMethodId)",
+  "function setUseBackupRandomness(bool enabled)",
+  "function testOracleConnection() pure returns (bool success, uint256 value)"
+]
