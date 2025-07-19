@@ -1,36 +1,48 @@
 ---
+description: Git workflow rules and branch strategy for BraveUniverse projects.
+globs:
+  - "**/*.ts"
+  - "**/*.js"
+  - "**/*.sol"
+mode: always
+---
 
 # GIT WORKFLOW RULES
 
 ## Branch Strategy
-- **ALL commits MUST be made directly to the `main` branch**
-- Feature branches are PROHIBITED
-- No pull requests required for Background Agent commits
-- Direct push to main is the standard workflow
+- ✅ All commits **must** be made directly to the `main` branch.
+- 🚫 Feature branches are **prohibited**.
+- ✅ Background Agent commits **do not require pull requests**.
+- ✅ Direct push to main is the **only accepted workflow**.
 
 ## Commit Rules
-- Commit messages must be descriptive and in English
-- Format: `feat: description` or `fix: description` or `docs: description`
-- Each logical change should be a separate commit
-- Never commit with generic messages like "update" or "fix"
+- ✅ Commit messages **must** be clear and descriptive, and written in English.
+- ✅ Use the format: `feat: description`, `fix: description`, or `docs: description`.
+- ✅ Each **logical change** should be a separate commit.
+- 🚫 Never commit with vague messages like `"update"` or `"fix"` without context.
 
 ## Push Policy
-- Always pull before push: `git pull origin main`
-- Push immediately after commit
-- Never leave local commits unpushed
+- ✅ Always pull before pushing: `git pull origin main`.
+- ✅ Push **immediately** after committing.
+- 🚫 Do **not** leave local commits unpushed.
 
 ## Workflow Steps
-1. Ensure you're on main: `git checkout main`
-2. Pull latest: `git pull origin main`
-3. Make changes
-4. Add files: `git add .`
-5. Commit: `git commit -m "feat: descriptive message"`
-6. Push: `git push origin main`
+1. ✅ Make sure you are on the main branch:
+   ```bash
+   git checkout main
+2.	✅ Pull the latest changes:
+git pull origin main
+3.	✅ Make your changes and stage them:
+git add .
+4.  ✅ Commit with a clear message:
+git commit -m "feat: short but descriptive summary"
+	5.	✅ Push your work:
+git push origin main
 
-## PROHIBITED
-- Creating new branches
-- Working on branches other than main
-- Keeping local changes without committing
-- Squashing or rebasing commits
+PROHIBITED ❌
+	•	Creating or using any other branch than main
+	•	Keeping local changes without committing
+	•	Using git rebase or git commit --amend in shared history
+	•	Force-pushing unless explicitly required by lead developer
 
-✅ REMEMBER: All work happens directly on main branch!
+✅ REMEMBER: Everything happens on the main branch — always clean, always up-to-date.
