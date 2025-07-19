@@ -1,14 +1,31 @@
 ---
+description: Deployment tracking rules and structure for BraveUniverse Diamond system.
+globs:
+  - "**/*.ts"
+  - "**/*.js"
+  - "scripts/**/*.ts"
+mode: always
+---
 
 # DEPLOYMENT TRACKING RULES
 
 ## MANDATORY TRACKING
-- Every deployment MUST be recorded in `deployments/network-name/deployment-log.json`
-- Each entry must include: timestamp, deployer, contract name, address, tx hash, gas used
-- Failed deployments must also be logged with error reason
-- Diamond upgrades must track both old and new facet addresses
+- ✅ Every deployment **must be recorded** in `deployments/<network-name>/deployment-log.json`.
+- ✅ Each log entry must include:
+  - `timestamp`
+  - `deployer`
+  - `contractName`
+  - `address`
+  - `txHash`
+  - `gasUsed`
+  - `status`
+- ✅ Failed deployments **must still be logged**, including `error` reason.
+- ✅ For **Diamond upgrades**, log both old and new facet addresses for full traceability.
 
 ## FILE STRUCTURE
+
+Example JSON format:
+
 ```json
 {
   "network": "luksoTestnet",
@@ -25,17 +42,20 @@
     }
   ]
 }
-```
+AUTOMATED CHECKS
+	•	✅ Scripts must check if a contract already exists at the address before redeploying.
+	•	✅ If contract is missing or broken:
+	•	Prompt user for redeployment confirmation.
+	•	Proceed to auto-redeploy if confirmed.
+	•	✅ After deployment, generate a summary including contract names and gas usage.
+	•	✅ Export contract addresses to addresses.json for convenient imports across scripts.
 
-## AUTOMATED CHECKS
-- Script must verify if contract already deployed at address
-- If missing, auto-redeploy with confirmation prompt
-- Generate deployment summary after each session
-- Export addresses to `addresses.json` for easy import
+VERIFICATION
+	•	✅ All deployed contracts must be verified on the appropriate block explorer.
+	•	✅ Verification status must be tracked in the deployment log (verified: true/false).
+	•	✅ Contract ABI must be exported to /abis/<ContractName>.json.
 
-## VERIFICATION
-- All deployed contracts must be verified on explorer
-- Verification status tracked in deployment log
-- ABI exported to `/abis` directory
-
-✅ No deployment is complete without tracking entry and verification
+✅ REMEMBER: A deployment is NOT considered complete until:
+	•	It is logged
+	•	It is verified
+	•	Its ABI is exported
