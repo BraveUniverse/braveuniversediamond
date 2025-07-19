@@ -9,51 +9,138 @@ interface IEntryPointOracle {
 }
 
 contract OracleFacet {
-    event OracleAddressUpdated(address indexed oldAddress, address indexed newAddress);
-    event OracleMethodIdUpdated(bytes32 indexed oldMethodId, bytes32 indexed newMethodId);
-    event RandomnessGenerated(uint256 randomValue, bool fromOracle);
-    event FallbackModeToggled(bool enabled);
+    event OracleValueUpdated(uint256 value, uint256 timestamp);
+    event OracleAddressChanged(address oldAddress, address newAddress);
+    event OracleMethodIDChanged(bytes32 oldMethodID, bytes32 newMethodID);
+    event BackupRandomnessToggled(bool enabled);
 
     modifier onlyOwner() {
         LibDiamond.enforceIsContractOwner();
         _;
     }
 
+    // Initialize oracle with default values (Gridotto'daki değerler)
+    function initializeOracle() external onlyOwner {
+        LibOracleStorage.Layout storage l = LibOracleStorage.layout();
+        
+        // Gridotto'daki default değerler
+        l.oracleAddress = 0xDb6D3d757b8FcC73cC0f076641318d99f721Ce71;
+        l.oracleMethodId = 0xf1bd2bfee10cc719fb50dbbe6ca6a3a36e2786f6aab5008f8bb28038241816db;
+        l.useBackupRandomness = true;
+        
+        // İlk oracle değerini güncelle
+        _updateOracleValue();
+    }
+
     // Set oracle address
-    function setOracleAddress(address _oracleAddress) external onlyOwner {
-        require(_oracleAddress != address(0), "OracleFacet: Invalid address");
+    function setOracleAddress(address newOracleAddress) external onlyOwner {
+        require(newOracleAddress != address(0), "Oracle address cannot be zero address");
         
         LibOracleStorage.Layout storage l = LibOracleStorage.layout();
         address oldAddress = l.oracleAddress;
-        l.oracleAddress = _oracleAddress;
+        l.oracleAddress = newOracleAddress;
         
-        emit OracleAddressUpdated(oldAddress, _oracleAddress);
+        emit OracleAddressChanged(oldAddress, newOracleAddress);
     }
 
     // Set oracle method ID
-    function setOracleMethodId(bytes32 _methodId) external onlyOwner {
-        require(_methodId != bytes32(0), "OracleFacet: Invalid method ID");
+    function setOracleMethodID(bytes32 newMethodId) external onlyOwner {
+        require(newMethodId != bytes32(0), "Method ID cannot be zero");
         
         LibOracleStorage.Layout storage l = LibOracleStorage.layout();
-        bytes32 oldMethodId = l.oracleMethodId;
-        l.oracleMethodId = _methodId;
+        bytes32 oldMethodID = l.oracleMethodId;
+        l.oracleMethodId = newMethodId;
         
-        emit OracleMethodIdUpdated(oldMethodId, _methodId);
+        emit OracleMethodIDChanged(oldMethodID, newMethodId);
     }
 
-    // Toggle fallback mode
-    function setFallbackMode(bool _enabled) external onlyOwner {
+    // Toggle backup randomness
+    function setUseBackupRandomness(bool enabled) external onlyOwner {
         LibOracleStorage.Layout storage l = LibOracleStorage.layout();
-        l.useFallback = _enabled;
+        l.useBackupRandomness = enabled;
         
-        emit FallbackModeToggled(_enabled);
+        emit BackupRandomnessToggled(enabled);
     }
 
-    // Get current oracle configuration
-    function getOracleConfig() external view returns (
+    // Internal function to update oracle value
+    function _updateOracleValue() internal returns (uint256) {
+        LibOracleStorage.Layout storage l = LibOracleStorage.layout();
+        
+        try IEntryPointOracle(l.oracleAddress).getMethodData(l.oracleMethodId) returns (uint256 randomValue) {
+            l.lastOracleValue = randomValue;
+            l.lastOracleTimestamp = block.timestamp;
+            emit OracleValueUpdated(randomValue, block.timestamp);
+            return randomValue;
+        } catch {
+            // Oracle çağrısı başarısız oldu
+            if (l.useBackupRandomness) {
+                // Fallback randomness kullan
+                if (l.lastOracleValue == 0) {
+                    // İlk kez fallback kullanılıyor
+                    l.lastOracleValue = uint256(keccak256(abi.encodePacked(
+                        block.timestamp, 
+                        block.prevrandao, 
+                        msg.sender
+                    ))) % 900000000 + 100000000;
+                    l.lastOracleTimestamp = block.timestamp;
+                    emit OracleValueUpdated(l.lastOracleValue, block.timestamp);
+                }
+                return l.lastOracleValue;
+            } else {
+                revert("Oracle access failed and backup randomness is disabled");
+            }
+        }
+    }
+
+    // Get random number (public function for other facets)
+    function getRandomNumber() external returns (uint256) {
+        return _updateOracleValue();
+    }
+
+    // Get random number with seed (for better randomness)
+    function getRandomNumberWithSeed(bytes32 seed) external returns (uint256) {
+        uint256 oracleValue = _updateOracleValue();
+        
+        return uint256(keccak256(abi.encodePacked(
+            oracleValue,
+            block.timestamp,
+            block.prevrandao,
+            msg.sender,
+            seed
+        )));
+    }
+
+    // Get random number in range
+    function getRandomInRange(uint256 min, uint256 max) external returns (uint256) {
+        require(max > min, "Invalid range");
+        uint256 randomValue = _updateOracleValue();
+        return (randomValue % (max - min + 1)) + min;
+    }
+
+    // Complex random for games (Gridotto tarzı)
+    function getGameRandomNumber(
+        bytes32 gameId,
+        uint256 roundNumber,
+        address player
+    ) external returns (uint256) {
+        uint256 oracleValue = _updateOracleValue();
+        
+        return uint256(keccak256(abi.encodePacked(
+            oracleValue,
+            block.timestamp,
+            block.prevrandao,
+            player,
+            gameId,
+            roundNumber,
+            blockhash(block.number - 1)
+        )));
+    }
+
+    // Get oracle data
+    function getOracleData() external view returns (
         address oracleAddress,
         bytes32 methodId,
-        bool useFallback,
+        bool useBackupRandomness,
         uint256 lastValue,
         uint256 lastTimestamp
     ) {
@@ -61,109 +148,17 @@ contract OracleFacet {
         return (
             l.oracleAddress,
             l.oracleMethodId,
-            l.useFallback,
+            l.useBackupRandomness,
             l.lastOracleValue,
             l.lastOracleTimestamp
         );
     }
 
-    // Generate random number with oracle or fallback
-    function getRandomNumber() external returns (uint256) {
-        return LibOracleStorage.generateRandomNumber();
-    }
-
-    // Generate random number with additional entropy
-    function getRandomNumberWithEntropy(bytes32 entropy) external returns (uint256) {
-        return LibOracleStorage.generateRandomNumberWithEntropy(entropy);
-    }
-
-    // Get random number in range [min, max]
-    function getRandomInRange(uint256 min, uint256 max) external returns (uint256) {
-        require(max > min, "OracleFacet: Invalid range");
-        uint256 random = LibOracleStorage.generateRandomNumber();
-        return (random % (max - min + 1)) + min;
-    }
-
-    // Get multiple random numbers
-    function getMultipleRandomNumbers(uint256 count) external returns (uint256[] memory) {
-        require(count > 0 && count <= 10, "OracleFacet: Invalid count");
-        
-        uint256[] memory randoms = new uint256[](count);
-        for (uint256 i = 0; i < count; i++) {
-            randoms[i] = LibOracleStorage.generateRandomNumberWithEntropy(bytes32(i));
-        }
-        
-        return randoms;
-    }
-
-    // Shuffle an array using Fisher-Yates algorithm
-    function shuffleArray(uint256[] memory array) external returns (uint256[] memory) {
-        uint256 n = array.length;
-        
-        for (uint256 i = n - 1; i > 0; i--) {
-            uint256 j = LibOracleStorage.generateRandomNumber() % (i + 1);
-            
-            // Swap elements
-            uint256 temp = array[i];
-            array[i] = array[j];
-            array[j] = temp;
-        }
-        
-        return array;
-    }
-
-    // Select random winners from participants
-    function selectRandomWinners(
-        address[] memory participants,
-        uint256 winnerCount
-    ) external returns (address[] memory) {
-        require(winnerCount > 0 && winnerCount <= participants.length, "OracleFacet: Invalid winner count");
-        
-        // Create indices array
-        uint256[] memory indices = new uint256[](participants.length);
-        for (uint256 i = 0; i < participants.length; i++) {
-            indices[i] = i;
-        }
-        
-        // Shuffle indices
-        for (uint256 i = participants.length - 1; i > 0; i--) {
-            uint256 j = LibOracleStorage.generateRandomNumber() % (i + 1);
-            uint256 temp = indices[i];
-            indices[i] = indices[j];
-            indices[j] = temp;
-        }
-        
-        // Select winners
-        address[] memory winners = new address[](winnerCount);
-        for (uint256 i = 0; i < winnerCount; i++) {
-            winners[i] = participants[indices[i]];
-        }
-        
-        return winners;
-    }
-
-    // Get weighted random selection
-    function getWeightedRandom(uint256[] memory weights) external returns (uint256) {
-        require(weights.length > 0, "OracleFacet: Empty weights");
-        
-        uint256 totalWeight = 0;
-        for (uint256 i = 0; i < weights.length; i++) {
-            totalWeight += weights[i];
-        }
-        
-        require(totalWeight > 0, "OracleFacet: Zero total weight");
-        
-        uint256 random = LibOracleStorage.generateRandomNumber() % totalWeight;
-        uint256 cumulative = 0;
-        
-        for (uint256 i = 0; i < weights.length; i++) {
-            cumulative += weights[i];
-            if (random < cumulative) {
-                return i;
-            }
-        }
-        
-        return weights.length - 1;
+    // Get oracle age (how old is the last value)
+    function getOracleAge() external view returns (uint256) {
+        LibOracleStorage.Layout storage l = LibOracleStorage.layout();
+        if (l.lastOracleTimestamp == 0) return type(uint256).max;
+        return block.timestamp - l.lastOracleTimestamp;
     }
 
     // Test oracle connection
@@ -179,5 +174,10 @@ contract OracleFacet {
         } catch {
             return (false, 0);
         }
+    }
+
+    // Force update oracle value (for testing)
+    function forceUpdateOracle() external onlyOwner returns (uint256) {
+        return _updateOracleValue();
     }
 }

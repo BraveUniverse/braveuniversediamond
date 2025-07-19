@@ -1,0 +1,10 @@
+{
+  "facet": "OracleFacet",
+  "status": "IN_PROGRESS",
+  "testCoverage": 90,
+  "multiUserTested": true,
+  "checklistComplete": false,
+  "gasSnapshotTakenAt": null,
+  "abiGenerated": false,
+  "facetMapLinked": true
+}
