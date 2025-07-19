@@ -24,8 +24,7 @@ library LibGridottoStorage {
         LSP7_HOLDER,
         LSP8_HOLDER,
         FOLLOWERS_AND_LSP7,
-        FOLLOWERS_AND_LSP8,
-        VIP_PASS_HOLDER
+        FOLLOWERS_AND_LSP8
     }
 
     struct DrawPrizeConfig {

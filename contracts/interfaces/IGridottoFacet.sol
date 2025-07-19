@@ -1,24 +1,21 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.0;
 
 import "../libs/LibGridottoStorage.sol";
 
 interface IGridottoFacet {
     // Events
-    event TicketPurchased(address indexed buyer, address indexed profile, uint256 amount, uint256 drawId);
-    event DrawCompleted(uint256 indexed drawNumber, address indexed winner, uint256 amount);
-    event MonthlyDrawCompleted(uint256 indexed drawNumber, address indexed winner, uint256 amount);
+    event TicketPurchased(address indexed buyer, address indexed profileId, uint256 amount, uint256 drawType);
+    event DrawExecuted(uint256 drawNumber, address winner, uint256 prize, uint256 drawType);
+    event PrizeClaimed(address indexed winner, uint256 amount);
+    event MonthlyDrawExecuted(uint256 drawNumber, address winner, uint256 prize);
+    event AdminWithdrawal(address indexed admin, uint256 amount);
+    event EmergencyWithdrawal(address indexed admin, address indexed to, uint256 amount);
+    event DrawCancelled(uint256 drawNumber, string reason);
     event UserDrawCreated(uint256 indexed drawId, address indexed creator, LibGridottoStorage.DrawType drawType);
     event UserDrawCompleted(uint256 indexed drawId, address[] winners, uint256 totalPrize);
-    event PrizeClaimed(address indexed winner, uint256 amount);
-    event DrawCancelled(uint256 indexed drawId, string reason);
+    event DrawExecutorRewarded(address indexed executor, uint256 reward, uint256 drawId);
 
-    // Official Draw Functions (Legacy)
-    function buyTicket(address contextProfile, uint256 amount) external payable;
-    function buyTicketsForSelected(address[] calldata selectedAddresses) external payable;
-    function claimPrize() external;
-    function getPendingPrize(address user) external view returns (uint256);
-    
     // User Draw Functions
     function createUserDraw(
         LibGridottoStorage.DrawType drawType,
@@ -55,7 +52,7 @@ interface IGridottoFacet {
     function executeUserDraw(uint256 drawId) external;
     function cancelUserDraw(uint256 drawId) external;
     
-    // View Functions
+    // User Draw View Functions
     function getUserDraw(uint256 drawId) external view returns (
         address creator,
         LibGridottoStorage.DrawType drawType,
@@ -72,25 +69,52 @@ interface IGridottoFacet {
     function calculateCurrentPrize(uint256 drawId) external view returns (uint256);
     function canParticipate(uint256 drawId, address user) external view returns (bool);
     
-    // Official Draw View Functions
-    function getCurrentDrawInfo() external view returns (
-        uint256 drawNumber,
-        uint256 prizePool,
+    // New UI Functions
+    function getActiveDraws() external view returns (uint256[] memory);
+    function getTotalActiveDraws() external view returns (uint256);
+    function getDrawDetails(uint256 drawId) external view returns (
+        address creator,
+        LibGridottoStorage.DrawType drawType,
+        LibGridottoStorage.DrawPrizeConfig memory prizeConfig,
+        uint256 ticketPrice,
         uint256 ticketsSold,
-        uint256 drawTime
+        uint256 maxTickets,
+        uint256 currentPrizePool,
+        uint256 startTime,
+        uint256 endTime,
+        bool isCompleted,
+        LibGridottoStorage.ParticipationRequirement requirement,
+        address requiredToken,
+        uint256 minTokenAmount
     );
+    function getUserCreatedDraws(address user) external view returns (uint256[] memory);
+    function getUserParticipatedDraws(address user) external view returns (uint256[] memory);
+    function getDrawWinners(uint256 drawId) external view returns (address[] memory);
+    function canExecuteDraw(uint256 drawId) external view returns (bool);
     
-    function getMonthlyDrawInfo() external view returns (
-        uint256 drawNumber,
-        uint256 prizePool,
-        uint256 ticketsSold,
-        uint256 drawTime
-    );
+    // Official Draw Functions (Legacy)
+    function buyTicket(address profile) external payable;
+    function buyMultipleTickets(address profile, uint256 amount) external payable;
+    function executeDraw() external;
+    function executeMonthlyDraw() external;
+    function claimPrize() external;
+    
+    // View Functions (Legacy)
+    function getDrawInfo() external view returns (uint256 drawNumber, uint256 endTime, uint256 prize, uint256 ticketsSold);
+    function getMonthlyDrawInfo() external view returns (uint256 drawNumber, uint256 endTime, uint256 prize, uint256 ticketsSold);
+    function getUserTicketCount(address user, uint256 drawNumber) external view returns (uint256);
+    function getWinner(uint256 drawNumber) external view returns (address);
+    function getMonthlyWinner(uint256 drawNumber) external view returns (address);
+    function getPendingPrize(address user) external view returns (uint256);
     
     // Admin Functions
-    function setTicketPrice(uint256 newPrice) external;
-    function setDrawIntervals(uint256 daily, uint256 monthly) external;
-    function setFeePercentages(uint256 ownerFee, uint256 monthlyPoolFee) external;
-    function setPaused(bool paused) external;
     function withdrawOwnerProfit() external;
+    function emergencyWithdraw(address to, uint256 amount) external;
+    function pause() external;
+    function unpause() external;
+    function setTicketPrice(uint256 newPrice) external;
+    function setDrawInterval(uint256 newInterval) external;
+    function setMonthlyDrawInterval(uint256 newInterval) external;
+    function setOwnerFeePercent(uint256 newPercent) external;
+    function setMonthlyPoolPercent(uint256 newPercent) external;
 }

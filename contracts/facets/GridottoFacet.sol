@@ -106,12 +106,17 @@ contract GridottoFacet is IGridottoFacet {
     }
     
     // Official Draw Functions
-    function buyTicket(address contextProfile, uint256 amount) 
-        external 
-        payable 
-        notPaused 
-        nonReentrant 
-        override 
+    function buyTicket(address profile) external payable notPaused nonReentrant override {
+        _processOfficialTicketPurchase(msg.sender, profile, 1);
+    }
+    
+    function buyMultipleTickets(address profile, uint256 amount) external payable notPaused nonReentrant override {
+        require(amount > 0, "Amount must be greater than 0");
+        _processOfficialTicketPurchase(msg.sender, profile, amount);
+    }
+    
+    function buyTicketInternal(address contextProfile, uint256 amount) 
+        internal 
     {
         require(contextProfile != address(0), "Invalid profile address");
         require(amount > 0, "Amount must be greater than 0");
@@ -241,10 +246,6 @@ contract GridottoFacet is IGridottoFacet {
             // This is a simplified check - in production, we'd need to iterate through user's tokens
             // For now, we'll assume the requirement is met if draw.prizeTokenIds is set
             require(draw.prizeTokenIds.length > 0 || draw.minTokenAmount > 0, "NFT requirement not properly configured");
-        } else if (draw.requirement == LibGridottoStorage.ParticipationRequirement.VIP_PASS_HOLDER) {
-            LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
-            uint8 tier = IVIPPass(l.vipPassAddress).getHighestTierOwned(participant);
-            require(tier > 0, "VIP Pass required");
         } else if (draw.requirement == LibGridottoStorage.ParticipationRequirement.FOLLOWERS_ONLY ||
                    draw.requirement == LibGridottoStorage.ParticipationRequirement.FOLLOWERS_AND_LSP7 ||
                    draw.requirement == LibGridottoStorage.ParticipationRequirement.FOLLOWERS_AND_LSP8) {
@@ -370,9 +371,9 @@ contract GridottoFacet is IGridottoFacet {
             // Reset pool with carryover
             l.currentDrawPrizePool = carryOver;
             
-            emit DrawCompleted(drawNumber, winner, prizeAmount);
+            emit DrawExecuted(drawNumber, winner, prizeAmount, 0);
         } else {
-            emit DrawCompleted(drawNumber, address(0), 0);
+            emit DrawExecuted(drawNumber, address(0), 0, 0);
         }
         
         // Increment draw number and reset timer
@@ -419,9 +420,9 @@ contract GridottoFacet is IGridottoFacet {
             // Reset pool with carryover
             l.monthlyPrizePool = carryOver;
             
-            emit MonthlyDrawCompleted(drawNumber, winner, prizeAmount);
+            emit MonthlyDrawExecuted(drawNumber, winner, prizeAmount);
         } else {
-            emit MonthlyDrawCompleted(drawNumber, address(0), 0);
+            emit MonthlyDrawExecuted(drawNumber, address(0), 0);
         }
         
         // Increment draw number and reset timer
@@ -672,13 +673,15 @@ contract GridottoFacet is IGridottoFacet {
             address winner = _selectWinner(draw, randomValue);
             draw.winners.push(winner);
             
-            // Calculate prize
+            // Calculate prize and executor reward
             uint256 prizeAmount = draw.currentPrizePool;
+            uint256 executorReward = (prizeAmount * 5) / 100; // 5% for executor
+            prizeAmount -= executorReward;
             
             // Platform already took 5% fee during ticket sales
             // Creator gets remaining amount based on model
             if (draw.prizeConfig.model == LibGridottoStorage.PrizeModel.CREATOR_FUNDED) {
-                // Creator funded it all, winner gets 95% (5% platform fee already deducted)
+                // Creator funded it all, winner gets prize minus executor reward
                 // No additional creator share
             } else if (draw.prizeConfig.participationFeePercent > 0) {
                 // If creator wants additional percentage from participation fees
@@ -693,6 +696,13 @@ contract GridottoFacet is IGridottoFacet {
             // Add to winner's pending prizes
             l.pendingPrizes[winner] += prizeAmount;
             
+            // Reward the executor (person who called this function)
+            if (executorReward > 0) {
+                (bool success, ) = msg.sender.call{value: executorReward}("");
+                require(success, "Executor reward transfer failed");
+                emit DrawExecutorRewarded(msg.sender, executorReward, drawId);
+            }
+            
             emit UserDrawCompleted(drawId, draw.winners, prizeAmount);
         }
         
@@ -706,7 +716,10 @@ contract GridottoFacet is IGridottoFacet {
         
         require(draw.creator == msg.sender, "Only creator can cancel");
         require(!draw.isCompleted, "Draw already completed");
-        require(draw.participants.length == 0, "Cannot cancel with participants");
+        require(draw.participants.length == 0, "Cannot cancel - draw has participants");
+        
+        // Can only cancel if no tickets sold
+        // This prevents any financial loss
         
         // Refund creator if they funded the prize
         if (draw.initialPrize > 0) {
@@ -717,7 +730,7 @@ contract GridottoFacet is IGridottoFacet {
         // Mark as completed/cancelled
         draw.isCompleted = true;
         
-        emit DrawCancelled(drawId, "Cancelled by creator");
+        emit DrawCancelled(drawId, "Cancelled - no participants");
     }
     
     function getUserDraw(uint256 drawId) external view override returns (
@@ -768,5 +781,101 @@ contract GridottoFacet is IGridottoFacet {
         
         // For now, simplified check - in production would check requirements
         return true;
+    }
+
+    // New UI Functions
+    function getActiveDraws() external view override returns (uint256[] memory) {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        uint256 activeCount = 0;
+        
+        // First count active draws
+        for (uint256 i = 0; i < l.nextDrawId; i++) {
+            LibGridottoStorage.UserDraw storage draw = l.userDraws[i];
+            if (draw.creator != address(0) && !draw.isCompleted && block.timestamp < draw.endTime) {
+                activeCount++;
+            }
+        }
+        
+        // Create array and fill with active draw IDs
+        uint256[] memory activeDraws = new uint256[](activeCount);
+        uint256 index = 0;
+        
+        for (uint256 i = 0; i < l.nextDrawId; i++) {
+            LibGridottoStorage.UserDraw storage draw = l.userDraws[i];
+            if (draw.creator != address(0) && !draw.isCompleted && block.timestamp < draw.endTime) {
+                activeDraws[index++] = i;
+            }
+        }
+        
+        return activeDraws;
+    }
+    
+    function getTotalActiveDraws() external view override returns (uint256) {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        uint256 activeCount = 0;
+        
+        for (uint256 i = 0; i < l.nextDrawId; i++) {
+            LibGridottoStorage.UserDraw storage draw = l.userDraws[i];
+            if (draw.creator != address(0) && !draw.isCompleted && block.timestamp < draw.endTime) {
+                activeCount++;
+            }
+        }
+        
+        return activeCount;
+    }
+    
+    function getDrawDetails(uint256 drawId) external view override returns (
+        address creator,
+        LibGridottoStorage.DrawType drawType,
+        LibGridottoStorage.DrawPrizeConfig memory prizeConfig,
+        uint256 ticketPrice,
+        uint256 ticketsSold,
+        uint256 maxTickets,
+        uint256 currentPrizePool,
+        uint256 startTime,
+        uint256 endTime,
+        bool isCompleted,
+        LibGridottoStorage.ParticipationRequirement requirement,
+        address requiredToken,
+        uint256 minTokenAmount
+    ) {
+        LibGridottoStorage.UserDraw storage draw = LibGridottoStorage.layout().userDraws[drawId];
+        return (
+            draw.creator,
+            draw.drawType,
+            draw.prizeConfig,
+            draw.ticketPrice,
+            draw.ticketsSold,
+            draw.maxTickets,
+            draw.currentPrizePool,
+            draw.startTime,
+            draw.endTime,
+            draw.isCompleted,
+            draw.requirement,
+            draw.requiredToken,
+            draw.minTokenAmount
+        );
+    }
+    
+    function getUserCreatedDraws(address user) external view override returns (uint256[] memory) {
+        return LibGridottoStorage.layout().userCreatedDraws[user];
+    }
+    
+    function getUserParticipatedDraws(address user) external view override returns (uint256[] memory) {
+        return LibGridottoStorage.layout().userParticipatedDraws[user];
+    }
+    
+    function getDrawWinners(uint256 drawId) external view override returns (address[] memory) {
+        return LibGridottoStorage.layout().userDraws[drawId].winners;
+    }
+    
+    function canExecuteDraw(uint256 drawId) external view override returns (bool) {
+        LibGridottoStorage.UserDraw storage draw = LibGridottoStorage.layout().userDraws[drawId];
+        
+        if (draw.creator == address(0) || draw.isCompleted) return false;
+        if (draw.participants.length == 0) return false;
+        
+        // Can execute if time passed OR max tickets sold
+        return (block.timestamp >= draw.endTime || draw.ticketsSold == draw.maxTickets);
     }
 }

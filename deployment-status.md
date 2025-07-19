@@ -1,53 +1,94 @@
-# Deployment Status
+# Brave Universe Deployment Status
 
-## Phase 1: Core Infrastructure ✅
+## 🚀 Current Status: Phase 2 Complete
 
-### Diamond Proxy
-- [x] BraveUniverseDiamond contract deployed - `0x5Ad808FAE645BA3682170467114e5b80A70bF276`
-- [x] DiamondCutFacet deployed - `0x528B2aD05dB526a2245c6621cB7D320E127d3be8`
-- [x] DiamondLoupeFacet deployed - `0xC5B9bb6d38B0f9E908BCa96E2154fF1C5ceca9D1`
-- [x] OwnershipFacet deployed - `0x6D2E0C2205A0660A6C5F0a0fAAA61D8107cC8260`
+### 📊 Overview
+- **Network**: LUKSO Testnet (Chain ID: 4201)
+- **Diamond Address**: `0x5Ad808FAE645BA3682170467114e5b80A70bF276`
+- **Latest Update**: January 18, 2025
 
-### Oracle System
-- [x] OracleFacet deployed - `0x7440762Df9E369E1b7BA2942d2Bf4605B51880C2`
-- [x] Randomness tested on testnet ✅
-- [x] Fallback mechanism verified ✅
+### ✅ Deployed Facets
 
-### Gridotto (Legacy)
-- [x] GridottoFacet deployed - `0x1a416e97aDC23b10f2208C92d6DC5113d7dD6528`
-- [x] Official draws tested ✅
-- [x] Prize distribution verified ✅
-- [x] VIP Pass integration tested ✅
-- [x] Claim functionality tested ✅
+| Facet | Address | Status | Version |
+|-------|---------|--------|---------|
+| DiamondCutFacet | `0x7f8C1877Ed0Da352f78be4B8f88e799E2e50Ecc6` | ✅ Active | v1 |
+| DiamondLoupeFacet | `0x4b36a3E019094F7501a42Fa505743B2e8D18094B` | ✅ Active | v1 |
+| OwnershipFacet | `0xdF827756C955611ce36f0d52d6033e2B4de1FA1e` | ✅ Active | v1 |
+| OracleFacet | `0x6fD8230d876c2f4A7289E4f4ba886a96c7688226` | ✅ Active | v1 |
+| GridottoFacet | `0x44Fc94e996a8821376A14763238B8Ab6B3139492` | ✅ Active | v2 (Phase 2) |
 
-## Phase 2: User Draws 🚧
-- [ ] User-created LYX draws
-- [ ] LSP7 token draws
-- [ ] LSP8 NFT draws
-- [ ] Participation requirements
-- [ ] Fee distribution
+### 🎯 GridottoFacet Phase 2 Features
 
-## Phase 3: Mini-Apps Integration 📅
-- [ ] SpaceCannon facet
-- [ ] Luksoll facet
-- [ ] Cross-facet interactions
-- [ ] Unified VIP benefits
+#### ✅ Completed Features:
+1. **User Draw Creation**
+   - Creator Funded draws
+   - Participant Funded draws
+   - Hybrid Funded draws
+   - Multiple participation requirements
 
-## Phase 4: Production 🎯
-- [ ] Mainnet deployment
-- [ ] Contract verification
-- [ ] Frontend integration
-- [ ] Documentation complete
+2. **Draw Management**
+   - Ticket purchase with VIP discounts
+   - Draw execution with max tickets or time limit
+   - Executor rewards (5% of prize pool)
+   - Prize claiming system
 
-## Test Network Details
-- **Network**: LUKSO Testnet
-- **Chain ID**: 4201
-- **Diamond**: `0x5Ad808FAE645BA3682170467114e5b80A70bF276`
-- **Explorer**: https://explorer.execution.testnet.lukso.network
+3. **UI Functions**
+   - `getActiveDraws()` - List all active draws
+   - `getDrawDetails()` - Get comprehensive draw info
+   - `getUserCreatedDraws()` - User's created draws
+   - `getUserParticipatedDraws()` - User's participated draws
+   - `getDrawWinners()` - Get draw winners
+   - `canExecuteDraw()` - Check if draw can be executed
 
-## Deployment Files
-- ✅ `/deployments/luksoTestnet/deployment-log.json`
-- ✅ `/deployments/luksoTestnet/addresses.json`
-- ✅ `/deployments/luksoTestnet/deployment-summary.md`
-- ❌ Contract verification pending
-- ❌ ABI exports pending
+4. **Safety Features**
+   - No cancellation after participants join
+   - Pull pattern for prize claims
+   - Reentrancy protection
+   - VIP Pass integration for discounts
+
+#### 🔄 Active Draws:
+- Draw #1: Creator funded, active
+- Draw #2: Creator funded, 2.475 LYX pool, 15 tickets sold
+- Draw #3: Participant funded, active
+
+### 📝 Implementation Notes
+
+1. **Executor Rewards**: Anyone can execute a draw after conditions are met and receive 5% of the prize pool
+2. **VIP Pass Benefits**: 
+   - Silver: 20% fee discount
+   - Gold: 40% fee discount
+   - Diamond: 60% fee discount
+   - Universe: 80% fee discount
+3. **Draw Limits**:
+   - Min duration: 1 hour
+   - Max duration: 30 days
+   - Max tickets: 10,000
+
+### 🚧 Known Issues
+- Interface compatibility issues with legacy functions need resolution
+- Some admin functions need proper implementation
+- Token/NFT draws pending LSP7/LSP8 integration
+
+### 📅 Deployment Timeline
+- **Phase 1**: ✅ December 19, 2024 - Core functionality
+- **Phase 2**: ✅ January 18, 2025 - User draws and UI
+- **Phase 3**: 🔜 Pending - Token/NFT draws, Social features
+
+### 🔗 External Dependencies
+- VIP Pass Testnet: `0xD2Ff04B87Fb9882bc529B3B2c8026BFcfAB0e7aF`
+- VIP Pass Mainnet: `0xC87F8c21b4F593eEEb7Fc6406dD3e6771C8d3E96`
+
+### 📊 Test Results
+- User draw creation: ✅ Working
+- Ticket purchase: ✅ Working  
+- Draw execution: ✅ Working (with max tickets)
+- Prize claiming: ✅ Working
+- Executor rewards: ✅ Working
+- UI functions: ✅ Working
+
+### 🎮 Next Steps
+1. Fix interface compatibility issues
+2. Implement remaining admin functions
+3. Add LSP7/LSP8 token draw support
+4. Integrate social features for follower requirements
+5. Deploy to LUKSO mainnet
