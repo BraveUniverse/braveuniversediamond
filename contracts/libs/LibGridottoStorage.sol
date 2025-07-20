@@ -123,6 +123,18 @@ library LibGridottoStorage {
         mapping(address => bool) hasParticipated;
     }
 
+    // Winner tracking for leaderboard
+    struct WinnerInfo {
+        address winner;
+        uint256 drawId;
+        DrawType drawType;
+        uint256 prizeAmount;
+        address prizeToken; // address(0) for LYX
+        bytes32 nftTokenId; // For NFT prizes
+        address drawCreator;
+        uint256 timestamp;
+    }
+
     struct Layout {
         // Official draws (legacy)
         uint256 currentDraw;
@@ -155,6 +167,10 @@ library LibGridottoStorage {
         mapping(address => uint256) pendingPrizes;
         mapping(address => mapping(address => uint256)) pendingTokenPrizes; // user => token => amount
         mapping(address => mapping(address => bytes32[])) pendingNFTPrizes; // user => nftContract => tokenIds
+        
+        // Recent winners tracking for leaderboard
+        WinnerInfo[] recentWinners;
+        uint256 maxRecentWinners; // Default 100
         
         // Pool amounts
         uint256 monthlyPrizePool;

@@ -343,4 +343,125 @@ contract GridottoUIHelperFacet {
         
         return (drawIds, ticketsBought, won);
     }
+
+    /**
+     * @notice Get recent winners for leaderboard
+     * @param offset Starting index
+     * @param limit Maximum number of results (max 100)
+     * @return winners Array of winner information
+     */
+    function getRecentWinners(
+        uint256 offset,
+        uint256 limit
+    ) external view returns (
+        LibGridottoStorage.WinnerInfo[] memory winners
+    ) {
+        if (limit == 0 || limit > 100) revert InvalidLimit();
+        
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        uint256 totalWinners = l.recentWinners.length;
+        
+        if (offset >= totalWinners) {
+            return new LibGridottoStorage.WinnerInfo[](0);
+        }
+        
+        uint256 resultSize = limit;
+        if (offset + limit > totalWinners) {
+            resultSize = totalWinners - offset;
+        }
+        
+        winners = new LibGridottoStorage.WinnerInfo[](resultSize);
+        
+        // Return in reverse order (most recent first)
+        for (uint256 i = 0; i < resultSize; i++) {
+            uint256 index = totalWinners - offset - i - 1;
+            winners[i] = l.recentWinners[index];
+        }
+        
+        return winners;
+    }
+
+    /**
+     * @notice Get detailed draw information for UI
+     * @param drawId The draw ID
+     * @return creator Draw creator address
+     * @return drawType Type of draw (USER_LYX, USER_LSP7, USER_LSP8)
+     * @return startTime Draw start timestamp
+     * @return endTime Draw end timestamp
+     * @return ticketPrice Price per ticket in wei
+     * @return totalTickets Total tickets sold
+     * @return participantCount Number of unique participants
+     * @return prizePool Current prize pool amount
+     * @return tokenAddress Token address (for LSP7 draws)
+     * @return nftContract NFT contract address (for LSP8 draws)
+     * @return nftCount Number of NFTs (for LSP8 draws)
+     * @return isCompleted Whether draw is completed
+     * @return winners Array of winner addresses
+     * @return minParticipants Minimum participants required
+     * @return maxParticipants Maximum participants allowed
+     * @return requirement Participation requirement type
+     * @return executorReward Calculated executor reward
+     */
+    function getAdvancedDrawInfo(uint256 drawId) external view returns (
+        address creator,
+        LibGridottoStorage.DrawType drawType,
+        uint256 startTime,
+        uint256 endTime,
+        uint256 ticketPrice,
+        uint256 totalTickets,
+        uint256 participantCount,
+        uint256 prizePool,
+        address tokenAddress,
+        address nftContract,
+        uint256 nftCount,
+        bool isCompleted,
+        address[] memory winners,
+        uint256 minParticipants,
+        uint256 maxParticipants,
+        LibGridottoStorage.ParticipationRequirement requirement,
+        uint256 executorReward
+    ) {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
+        
+        creator = draw.creator;
+        drawType = draw.drawType;
+        startTime = draw.startTime;
+        endTime = draw.endTime;
+        ticketPrice = draw.ticketPrice;
+        totalTickets = draw.totalTickets;
+        participantCount = draw.participants.length;
+        
+        // Calculate prize pool based on draw type
+        if (draw.drawType == LibGridottoStorage.DrawType.USER_LYX) {
+            prizePool = draw.currentPrize;
+        } else if (draw.drawType == LibGridottoStorage.DrawType.USER_LSP7) {
+            prizePool = draw.currentPrizePool;
+            tokenAddress = draw.tokenAddress;
+        } else if (draw.drawType == LibGridottoStorage.DrawType.USER_LSP8) {
+            nftContract = draw.nftAddress;
+            nftCount = draw.nftTokenIds.length;
+            prizePool = draw.currentPrize; // LYX amount for NFT draws
+        }
+        
+        isCompleted = draw.isCompleted;
+        winners = draw.winners;
+        minParticipants = draw.minParticipants;
+        maxParticipants = draw.maxTickets;
+        requirement = draw.requirement;
+        
+        // Calculate executor reward
+        if (!draw.isCompleted && block.timestamp >= draw.endTime) {
+            if (draw.ticketPrice > 0 && draw.totalTickets > 0) {
+                uint256 totalCollected = draw.ticketPrice * draw.totalTickets;
+                (uint256 executorPercent, uint256 maxReward) = LibAdminStorage.getExecutorRewardConfig();
+                executorReward = (totalCollected * executorPercent) / 100;
+                
+                // Apply max reward cap for LYX draws only
+                if (draw.drawType == LibGridottoStorage.DrawType.USER_LYX && executorReward > maxReward) {
+                    executorReward = maxReward;
+                }
+            }
+        }
+    }
 }

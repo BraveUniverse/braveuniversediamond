@@ -80,7 +80,7 @@ contract GridottoFacet is IGridottoFacet {
             l.ticketPrice = 0.1 ether;
         }
         if (l.drawInterval == 0) {
-            l.drawInterval = 7 days;
+            l.drawInterval = 7 days; // Weekly draw
             l.monthlyDrawInterval = 30 days;
         }
         if (l.ownerFeePercent == 0) {
@@ -505,6 +505,17 @@ contract GridottoFacet is IGridottoFacet {
             l.drawPrizes[drawNumber] = prizeAmount;
             l.pendingPrizes[winner] += prizeAmount;
             
+            // Track winner for leaderboard
+            _trackWinner(
+                winner,
+                drawNumber,
+                LibGridottoStorage.DrawType.OFFICIAL_DAILY,
+                prizeAmount,
+                address(0), // LYX
+                bytes32(0),
+                address(0) // No creator for official draws
+            );
+            
             // Reset pool with carryover
             l.currentDrawPrizePool = carryOver;
             
@@ -553,6 +564,17 @@ contract GridottoFacet is IGridottoFacet {
             l.monthlyWinners[drawNumber] = winner;
             l.monthlyDrawPrizes[drawNumber] = prizeAmount;
             l.pendingPrizes[winner] += prizeAmount;
+            
+            // Track winner for leaderboard
+            _trackWinner(
+                winner,
+                drawNumber,
+                LibGridottoStorage.DrawType.OFFICIAL_MONTHLY,
+                prizeAmount,
+                address(0), // LYX
+                bytes32(0),
+                address(0) // No creator for official draws
+            );
             
             // Reset pool with carryover
             l.monthlyPrizePool = carryOver;
@@ -1223,6 +1245,17 @@ contract GridottoFacet is IGridottoFacet {
                 } else {
                     // Single winner
                     l.pendingPrizes[draw.winners[0]] += prizeAmount;
+                    
+                    // Track winner for leaderboard
+                    _trackWinner(
+                        draw.winners[0],
+                        drawId,
+                        draw.drawType,
+                        prizeAmount,
+                        address(0), // LYX
+                        bytes32(0),
+                        draw.creator
+                    );
                 }
                 
                 // Reward the executor (person who called this function)
@@ -1245,6 +1278,17 @@ contract GridottoFacet is IGridottoFacet {
                     // Single winner
                     uint256 winnerPrize = draw.currentPrizePool - tokenExecutorReward;
                     token.transfer(address(this), draw.winners[0], winnerPrize, true, "");
+                    
+                    // Track winner for leaderboard
+                    _trackWinner(
+                        draw.winners[0],
+                        drawId,
+                        draw.drawType,
+                        winnerPrize,
+                        draw.tokenAddress,
+                        bytes32(0),
+                        draw.creator
+                    );
                 }
                 
                 // Transfer executor reward
@@ -1264,6 +1308,17 @@ contract GridottoFacet is IGridottoFacet {
                     ILSP8IdentifiableDigitalAsset nft = ILSP8IdentifiableDigitalAsset(draw.nftAddress);
                     for (uint256 i = 0; i < draw.nftTokenIds.length; i++) {
                         nft.transfer(address(this), draw.winners[0], draw.nftTokenIds[i], true, "");
+                        
+                        // Track each NFT winner for leaderboard
+                        _trackWinner(
+                            draw.winners[0],
+                            drawId,
+                            draw.drawType,
+                            1, // 1 NFT
+                            draw.nftAddress,
+                            draw.nftTokenIds[i],
+                            draw.creator
+                        );
                     }
                 }
                 
@@ -1617,5 +1672,44 @@ contract GridottoFacet is IGridottoFacet {
     
     function getCreatorTokenProfit(address creator, address tokenAddress) external view returns (uint256) {
         return LibGridottoStorage.layout().creatorTokenProfit[creator][tokenAddress];
+    }
+
+    // Internal helper to track winners
+    function _trackWinner(
+        address winner,
+        uint256 drawId,
+        LibGridottoStorage.DrawType drawType,
+        uint256 prizeAmount,
+        address prizeToken,
+        bytes32 nftTokenId,
+        address drawCreator
+    ) internal {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        
+        // Initialize max if not set
+        if (l.maxRecentWinners == 0) {
+            l.maxRecentWinners = 100;
+        }
+        
+        // Add to recent winners
+        l.recentWinners.push(LibGridottoStorage.WinnerInfo({
+            winner: winner,
+            drawId: drawId,
+            drawType: drawType,
+            prizeAmount: prizeAmount,
+            prizeToken: prizeToken,
+            nftTokenId: nftTokenId,
+            drawCreator: drawCreator,
+            timestamp: block.timestamp
+        }));
+        
+        // Keep only the most recent winners
+        if (l.recentWinners.length > l.maxRecentWinners) {
+            // Remove oldest winner
+            for (uint256 i = 0; i < l.recentWinners.length - 1; i++) {
+                l.recentWinners[i] = l.recentWinners[i + 1];
+            }
+            l.recentWinners.pop();
+        }
     }
 }
