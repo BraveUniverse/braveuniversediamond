@@ -1,0 +1,13 @@
+{
+  "network": "lukso-testnet",
+  "updateDate": "2025-07-20T13:30:37.429Z",
+  "oldFacet": "0xc874cD999d7f0E0dD2770a3597d16707a8517f2a",
+  "newFacet": "0x7A5fC79dd30afFCB4554CaBB9b69258fAcF0Db2a",
+  "newFunctions": [
+    "getUserDrawExecutorReward(uint256)",
+    "getDrawParticipants(uint256,uint256,uint256)",
+    "canUserParticipate(uint256,address)",
+    "getUserParticipationHistory(address,uint256,uint256)"
+  ],
+  "diamondCutTx": "0x045c5d36cc5f695df6050187cef7c9ca6364e2173e3beece29d7321f564e3d2c"
+}

@@ -170,4 +170,177 @@ contract GridottoUIHelperFacet {
         
         return (currentDraw, currentMonthlyDraw, nextDrawTime, nextMonthlyDrawTime, ticketPrice);
     }
+
+    /**
+     * @notice Get executor reward for a user draw
+     * @param drawId The draw ID
+     * @return reward The executor reward amount
+     */
+    function getUserDrawExecutorReward(uint256 drawId) external view returns (uint256 reward) {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
+        
+        if (draw.endTime == 0 || block.timestamp < draw.endTime) {
+            return 0;
+        }
+        
+        // Executor gets 1% of collected fees
+        uint256 totalCollected = draw.ticketsSold * draw.ticketPrice;
+        reward = (totalCollected * 1) / 100;
+        
+        return reward;
+    }
+
+    /**
+     * @notice Get draw participants list
+     * @param drawId The draw ID
+     * @param offset Starting position
+     * @param limit Number of results
+     * @return participants Array of participant addresses
+     * @return ticketCounts Array of ticket counts per participant
+     */
+    function getDrawParticipants(
+        uint256 drawId,
+        uint256 offset,
+        uint256 limit
+    ) external view returns (
+        address[] memory participants,
+        uint256[] memory ticketCounts
+    ) {
+        if (limit == 0 || limit > 100) revert InvalidLimit();
+        
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
+        
+        uint256 totalParticipants = draw.participants.length;
+        
+        if (offset >= totalParticipants) {
+            return (new address[](0), new uint256[](0));
+        }
+        
+        uint256 resultSize = limit;
+        if (offset + limit > totalParticipants) {
+            resultSize = totalParticipants - offset;
+        }
+        
+        participants = new address[](resultSize);
+        ticketCounts = new uint256[](resultSize);
+        
+        for (uint256 i = 0; i < resultSize; i++) {
+            address participant = draw.participants[offset + i];
+            participants[i] = participant;
+            ticketCounts[i] = draw.userTickets[participant];
+        }
+        
+        return (participants, ticketCounts);
+    }
+
+    /**
+     * @notice Check if user can participate in a draw
+     * @param drawId The draw ID
+     * @param user The user address
+     * @return canParticipate Whether user can participate
+     * @return reason Reason if cannot participate
+     */
+    function canUserParticipate(
+        uint256 drawId,
+        address user
+    ) external view returns (
+        bool canParticipate,
+        string memory reason
+    ) {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
+        
+        // Check if draw exists
+        if (draw.endTime == 0) {
+            return (false, "Draw does not exist");
+        }
+        
+        // Check if draw has ended
+        if (block.timestamp >= draw.endTime) {
+            return (false, "Draw has ended");
+        }
+        
+        // Check if draw is completed
+        if (draw.isCompleted) {
+            return (false, "Draw is completed");
+        }
+        
+        // Check max participants
+        if (draw.maxTickets > 0 && draw.ticketsSold >= draw.maxTickets) {
+            return (false, "Maximum tickets reached");
+        }
+        
+        // Check participation requirements
+        if (draw.requirement == LibGridottoStorage.ParticipationRequirement.LSP7_HOLDER) {
+            // Would check token balance here
+            // For now, assume pass
+        } else if (draw.requirement == LibGridottoStorage.ParticipationRequirement.LSP8_HOLDER) {
+            // Would check NFT ownership here
+            // For now, assume pass
+        } else if (draw.requirement == LibGridottoStorage.ParticipationRequirement.FOLLOWERS_ONLY) {
+            // Would check follower count here
+            // For now, assume pass
+        }
+        
+        return (true, "");
+    }
+
+    /**
+     * @notice Get user's participation history
+     * @param user The user address
+     * @param offset Starting position
+     * @param limit Number of results
+     * @return drawIds Array of draw IDs user participated in
+     * @return ticketsBought Array of tickets bought per draw
+     * @return won Array indicating if user won each draw
+     */
+    function getUserParticipationHistory(
+        address user,
+        uint256 offset,
+        uint256 limit
+    ) external view returns (
+        uint256[] memory drawIds,
+        uint256[] memory ticketsBought,
+        bool[] memory won
+    ) {
+        if (limit == 0 || limit > 100) revert InvalidLimit();
+        
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        
+        uint256[] storage participatedDraws = l.userParticipatedDraws[user];
+        uint256 totalParticipated = participatedDraws.length;
+        
+        if (offset >= totalParticipated) {
+            return (new uint256[](0), new uint256[](0), new bool[](0));
+        }
+        
+        uint256 resultSize = limit;
+        if (offset + limit > totalParticipated) {
+            resultSize = totalParticipated - offset;
+        }
+        
+        drawIds = new uint256[](resultSize);
+        ticketsBought = new uint256[](resultSize);
+        won = new bool[](resultSize);
+        
+        for (uint256 i = 0; i < resultSize; i++) {
+            uint256 drawId = participatedDraws[offset + i];
+            LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
+            
+            drawIds[i] = drawId;
+            ticketsBought[i] = draw.userTickets[user];
+            
+            // Check if user won
+            for (uint256 j = 0; j < draw.winners.length; j++) {
+                if (draw.winners[j] == user) {
+                    won[i] = true;
+                    break;
+                }
+            }
+        }
+        
+        return (drawIds, ticketsBought, won);
+    }
 }
