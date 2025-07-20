@@ -39,8 +39,8 @@ contract GridottoPhase4Facet {
         IGridottoFacet.AdvancedDrawConfig calldata config
     ) external payable notBanned notBlacklisted returns (uint256 drawId) {
         require(config.ticketPrice > 0, "Ticket price must be greater than 0");
-        require(config.duration >= LibAdminStorage.getMinDrawDuration() && config.duration <= 30 days, "Invalid duration");
-        require(config.maxTickets > 0 && config.maxTickets <= LibAdminStorage.getMaxTicketsPerDraw(), "Invalid max tickets");
+        require(config.duration >= 1 hours && config.duration <= 30 days, "Invalid duration");
+        require(config.maxTickets > 0 && config.maxTickets <= 100000, "Invalid max tickets");
         require(config.prizeConfig.totalWinners > 0 && config.prizeConfig.totalWinners <= 100, "Invalid winner count");
         
         LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
@@ -53,6 +53,7 @@ contract GridottoPhase4Facet {
         draw.endTime = block.timestamp + config.duration;
         draw.ticketPrice = config.ticketPrice;
         draw.maxTickets = config.maxTickets;
+        draw.minParticipants = config.minParticipants;
         draw.requirement = config.requirement;
         draw.requiredToken = config.requiredToken;
         draw.minTokenAmount = config.minTokenAmount;

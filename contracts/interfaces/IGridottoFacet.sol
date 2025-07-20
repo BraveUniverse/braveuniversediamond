@@ -9,6 +9,7 @@ interface IGridottoFacet {
         uint256 ticketPrice;
         uint256 duration;
         uint256 maxTickets;
+        uint256 minParticipants;
         uint256 initialPrize;
         LibGridottoStorage.ParticipationRequirement requirement;
         address requiredToken;

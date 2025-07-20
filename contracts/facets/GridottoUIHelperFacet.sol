@@ -464,4 +464,159 @@ contract GridottoUIHelperFacet {
             }
         }
     }
+
+    /**
+     * @notice Get draws that are expired but haven't met minimum participants
+     * @param limit Maximum number of results
+     * @return drawIds Array of draw IDs
+     * @return endTimes Array of end times
+     * @return participantCounts Current participant counts
+     * @return minParticipants Minimum participant requirements
+     */
+    function getExpiredDrawsWaitingExecution(uint256 limit) external view returns (
+        uint256[] memory drawIds,
+        uint256[] memory endTimes,
+        uint256[] memory participantCounts,
+        uint256[] memory minParticipants
+    ) {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        uint256 count = 0;
+        uint256[] memory tempIds = new uint256[](limit);
+        
+        // Count expired draws waiting
+        for (uint256 i = 0; i < l.activeUserDraws.length && count < limit; i++) {
+            uint256 drawId = l.activeUserDraws[i];
+            LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
+            
+            if (!draw.isCompleted && 
+                block.timestamp >= draw.endTime &&
+                draw.participants.length > 0 &&
+                (draw.minParticipants == 0 || draw.participants.length < draw.minParticipants)) {
+                tempIds[count++] = drawId;
+            }
+        }
+        
+        // Prepare return arrays
+        drawIds = new uint256[](count);
+        endTimes = new uint256[](count);
+        participantCounts = new uint256[](count);
+        minParticipants = new uint256[](count);
+        
+        for (uint256 i = 0; i < count; i++) {
+            LibGridottoStorage.UserDraw storage draw = l.userDraws[tempIds[i]];
+            drawIds[i] = tempIds[i];
+            endTimes[i] = draw.endTime;
+            participantCounts[i] = draw.participants.length;
+            minParticipants[i] = draw.minParticipants;
+        }
+    }
+    
+    /**
+     * @notice Check if a draw can be executed considering grace period
+     * @param drawId The draw ID to check
+     * @return canExecute Whether the draw can be executed
+     * @return reason Reason if cannot execute
+     */
+    function canExecuteDraw(uint256 drawId) external view returns (bool canExecute, string memory reason) {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
+        
+        if (draw.creator == address(0)) {
+            return (false, "Draw does not exist");
+        }
+        
+        if (draw.isCompleted) {
+            return (false, "Draw already completed");
+        }
+        
+        if (block.timestamp < draw.endTime) {
+            return (false, "Draw not ended yet");
+        }
+        
+        if (draw.participants.length == 0) {
+            return (false, "No participants");
+        }
+        
+        // Check minimum participants with grace period
+        if (draw.minParticipants > 0 && draw.participants.length < draw.minParticipants) {
+            uint256 gracePeriod = 7 days;
+            if (block.timestamp < draw.endTime + gracePeriod) {
+                uint256 timeLeft = (draw.endTime + gracePeriod) - block.timestamp;
+                return (false, string(abi.encodePacked(
+                    "Min participants not met. Wait ",
+                    _uint2str(timeLeft / 86400),
+                    " more days"
+                )));
+            }
+        }
+        
+        return (true, "Can execute");
+    }
+    
+    /**
+     * @notice Get draws that can be cancelled by owner (for cleanup)
+     * @param limit Maximum number of results
+     * @return drawIds Array of draw IDs that can be cleaned up
+     * @return creators Array of creators
+     * @return endTimes Array of end times
+     * @return hasParticipants Whether draws have participants
+     */
+    function getDrawsForCleanup(uint256 limit) external view returns (
+        uint256[] memory drawIds,
+        address[] memory creators,
+        uint256[] memory endTimes,
+        bool[] memory hasParticipants
+    ) {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        uint256 count = 0;
+        uint256[] memory tempIds = new uint256[](limit);
+        
+        // Find old uncompleted draws
+        uint256 cleanupThreshold = 30 days; // Draws older than 30 days
+        
+        for (uint256 i = 0; i < l.activeUserDraws.length && count < limit; i++) {
+            uint256 drawId = l.activeUserDraws[i];
+            LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
+            
+            if (!draw.isCompleted && 
+                block.timestamp >= draw.endTime + cleanupThreshold) {
+                tempIds[count++] = drawId;
+            }
+        }
+        
+        // Prepare return arrays
+        drawIds = new uint256[](count);
+        creators = new address[](count);
+        endTimes = new uint256[](count);
+        hasParticipants = new bool[](count);
+        
+        for (uint256 i = 0; i < count; i++) {
+            LibGridottoStorage.UserDraw storage draw = l.userDraws[tempIds[i]];
+            drawIds[i] = tempIds[i];
+            creators[i] = draw.creator;
+            endTimes[i] = draw.endTime;
+            hasParticipants[i] = draw.participants.length > 0;
+        }
+    }
+    
+    // Helper function to convert uint to string
+    function _uint2str(uint256 _i) internal pure returns (string memory) {
+        if (_i == 0) {
+            return "0";
+        }
+        uint256 j = _i;
+        uint256 length;
+        while (j != 0) {
+            length++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(length);
+        uint256 k = length;
+        j = _i;
+        while (j != 0) {
+            bstr[--k] = bytes1(uint8(48 + j % 10));
+            j /= 10;
+        }
+        return string(bstr);
+    }
 }

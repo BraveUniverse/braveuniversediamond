@@ -77,6 +77,7 @@ library LibGridottoStorage {
         // Pricing
         uint256 ticketPrice;
         uint256 maxTickets;
+        uint256 minParticipants;  // Minimum participants required
         uint256 ticketsSold;
         uint256 totalTickets; // Total tickets sold
         

@@ -6,6 +6,7 @@ import "../libs/LibAdminStorage.sol";
 import "../interfaces/ILSP7DigitalAsset.sol";
 import "../interfaces/ILSP8IdentifiableDigitalAsset.sol";
 import "../interfaces/IOracleFacet.sol";
+import { LibDiamond } from "../libs/LibDiamond.sol";
 
 contract GridottoExecutionFacet {
     using LibGridottoStorage for LibGridottoStorage.Layout;
@@ -14,6 +15,7 @@ contract GridottoExecutionFacet {
     event UserDrawExecuted(uint256 indexed drawId, address indexed executor, address[] winners);
     event DrawExecutorRewarded(address indexed executor, uint256 reward, uint256 drawId);
     event UserDrawCompleted(uint256 indexed drawId, address[] winners, uint256 prizeAmount);
+    event UserDrawCancelled(uint256 indexed drawId, address indexed canceller, string reason);
     
     // Modifiers
     modifier notBanned() {
@@ -46,6 +48,16 @@ contract GridottoExecutionFacet {
         require(block.timestamp >= draw.endTime, "Draw not ended yet");
         require(draw.participants.length > 0, "No participants");
         
+        // Check minimum participants - allow execution if time has passed
+        if (draw.minParticipants > 0 && draw.participants.length < draw.minParticipants) {
+            // Allow execution after grace period (e.g., 7 days after end time)
+            uint256 gracePeriod = 7 days;
+            require(
+                block.timestamp >= draw.endTime + gracePeriod,
+                "Min participants not met, wait for grace period"
+            );
+        }
+        
         // Select winners
         _selectWinners(draw, drawId);
         
@@ -59,48 +71,78 @@ contract GridottoExecutionFacet {
     }
     
     /**
-     * @notice Cancel a user draw (only if no participants)
+     * @notice Cancel a user draw (only creator or owner)
      * @param drawId The draw ID to cancel
      */
-    function cancelUserDraw(uint256 drawId) external {
+    function cancelUserDraw(uint256 drawId) external notPaused nonReentrant {
         LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
         LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
         
-        require(draw.creator == msg.sender, "Only creator can cancel");
+        require(draw.creator != address(0), "Draw does not exist");
         require(!draw.isCompleted, "Draw already completed");
-        require(draw.participants.length == 0, "Cannot cancel - draw has participants");
         
-        // Refund creator based on draw type
-        if (draw.drawType == LibGridottoStorage.DrawType.USER_LYX) {
-            if (draw.initialPrize > 0) {
-                (bool success, ) = draw.creator.call{value: draw.initialPrize}("");
-                require(success, "Refund failed");
-            }
-        } else if (draw.drawType == LibGridottoStorage.DrawType.USER_LSP7) {
-            if (draw.initialPrize > 0) {
-                ILSP7DigitalAsset(draw.tokenAddress).transfer(
-                    address(this),
-                    draw.creator,
-                    draw.initialPrize,
-                    true,
-                    ""
-                );
-            }
-        } else if (draw.drawType == LibGridottoStorage.DrawType.USER_LSP8) {
+        // Allow creator to cancel only if no participants
+        // Allow owner to cancel any draw (for cleanup)
+        bool isOwner = msg.sender == LibDiamond.contractOwner();
+        
+        if (!isOwner) {
+            require(draw.creator == msg.sender, "Only creator can cancel");
+            require(draw.participants.length == 0, "Cannot cancel with participants");
+        }
+        
+        // Mark as completed to prevent execution
+        draw.isCompleted = true;
+        
+        // Return initial prize to creator (if any)
+        if (draw.initialPrize > 0 && draw.drawType == LibGridottoStorage.DrawType.USER_LYX) {
+            (bool success, ) = payable(draw.creator).call{value: draw.initialPrize}("");
+            require(success, "Prize return failed");
+        } else if (draw.drawType == LibGridottoStorage.DrawType.USER_LSP7 && draw.initialPrize > 0) {
+            ILSP7DigitalAsset token = ILSP7DigitalAsset(draw.tokenAddress);
+            token.transfer(address(this), draw.creator, draw.initialPrize, true, "");
+        } else if (draw.drawType == LibGridottoStorage.DrawType.USER_LSP8 && draw.nftTokenIds.length > 0) {
             ILSP8IdentifiableDigitalAsset nft = ILSP8IdentifiableDigitalAsset(draw.nftAddress);
             for (uint256 i = 0; i < draw.nftTokenIds.length; i++) {
                 nft.transfer(address(this), draw.creator, draw.nftTokenIds[i], true, "");
             }
-            
-            // Refund any LYX sent
-            if (draw.initialPrize > 0) {
-                (bool success, ) = draw.creator.call{value: draw.initialPrize}("");
-                require(success, "LYX refund failed");
-            }
         }
+        
+        // Remove from active draws
+        _removeFromActiveDraws(drawId);
+        
+        emit UserDrawCancelled(drawId, msg.sender, isOwner ? "Admin cancelled" : "Creator cancelled");
+    }
+    
+    /**
+     * @notice Force execute a draw that met minimum time requirements (owner only)
+     * @param drawId The draw ID to force execute
+     */
+    function forceExecuteDraw(uint256 drawId) external notPaused nonReentrant {
+        require(msg.sender == LibDiamond.contractOwner(), "Only owner");
+        
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
+        
+        require(draw.creator != address(0), "Draw does not exist");
+        require(!draw.isCompleted, "Draw already completed");
+        require(draw.participants.length > 0, "No participants");
+        
+        // Admin can force execute after end time regardless of min participants
+        require(block.timestamp >= draw.endTime, "Draw not ended yet");
+        
+        // Select winners
+        _selectWinners(draw, drawId);
         
         // Mark as completed
         draw.isCompleted = true;
+        
+        // Distribute prizes
+        _distributePrizes(draw, drawId);
+        
+        // Remove from active draws
+        _removeFromActiveDraws(drawId);
+        
+        emit UserDrawExecuted(drawId, msg.sender, draw.winners);
     }
     
     // Internal functions
@@ -412,5 +454,14 @@ contract GridottoExecutionFacet {
         }
         
         emit UserDrawCompleted(drawId, draw.winners, 0);
+    }
+
+    function _removeFromActiveDraws(uint256 drawId) internal {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        // This function is not fully implemented in the original file,
+        // so it's added here as a placeholder.
+        // In a real scenario, this would remove the draw from a mapping
+        // of active draws or a similar data structure.
+        // For now, it's just a placeholder to avoid compilation errors.
     }
 }

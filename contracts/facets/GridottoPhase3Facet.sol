@@ -12,10 +12,13 @@ contract GridottoPhase3Facet {
     using LibAdminStorage for LibAdminStorage.AdminLayout;
     
     // Events
-    event TokenDrawCreated(uint256 indexed drawId, address indexed creator, address tokenAddress);
+    event TokenDrawCreated(uint256 indexed drawId, address indexed creator, address tokenAddress, uint256 initialPrize);
     event NFTDrawCreated(uint256 indexed drawId, address indexed creator, address nftContract, bytes32[] tokenIds);
     event TokenPrizeClaimed(uint256 indexed drawId, address indexed winner, uint256 amount);
     event NFTPrizeClaimed(uint256 indexed drawId, address indexed winner, bytes32 tokenId);
+    event DrawRefunded(uint256 indexed drawId, address indexed participant, uint256 amount);
+    event UserDrawRefunded(uint256 indexed drawId, uint256 participantsCount, uint256 currentPrizePool);
+    event RefundClaimed(uint256 indexed drawId, address indexed participant, uint256 amount);
     
     // Modifiers
     modifier notBanned() {
@@ -43,22 +46,17 @@ contract GridottoPhase3Facet {
     // Phase 3: LSP7 Token Draw Functions
     function createTokenDraw(
         address tokenAddress,
-        uint256 prizeAmount,
-        uint256 ticketPrice,
+        uint256 initialPrize,
+        uint256 ticketPriceLYX,
         uint256 duration,
-        uint256 maxTickets,
-        LibGridottoStorage.ParticipationRequirement requirement,
-        address requiredToken,
-        uint256 minTokenAmount
+        uint256 minParticipants,
+        uint256 maxParticipants,
+        uint256 creatorFeePercent
     ) external notBanned notBlacklisted returns (uint256 drawId) {
         require(tokenAddress != address(0), "Invalid token address");
-        require(prizeAmount > 0, "Prize amount must be greater than 0");
-        require(ticketPrice > 0, "Ticket price must be greater than 0");
+        require(ticketPriceLYX > 0, "Ticket price must be greater than 0");
         require(duration >= 1 hours && duration <= 30 days, "Invalid duration");
-        require(maxTickets > 0 && maxTickets <= LibAdminStorage.getMaxTicketsPerDraw(), "Invalid max tickets");
-        
-        // Transfer tokens from creator
-        ILSP7DigitalAsset(tokenAddress).transfer(msg.sender, address(this), prizeAmount, true, "");
+        require(creatorFeePercent <= 10, "Creator fee too high"); // Max 10%
         
         LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
         drawId = l.nextDrawId++;
@@ -68,54 +66,49 @@ contract GridottoPhase3Facet {
         draw.drawType = LibGridottoStorage.DrawType.USER_LSP7;
         draw.startTime = block.timestamp;
         draw.endTime = block.timestamp + duration;
-        draw.ticketPrice = ticketPrice;
-        draw.maxTickets = maxTickets;
-        draw.requirement = requirement;
-        draw.requiredToken = requiredToken;
-        draw.minTokenAmount = minTokenAmount;
+        draw.ticketPrice = ticketPriceLYX;
+        draw.maxTickets = maxParticipants > 0 ? maxParticipants : 10000; // Default max
+        draw.minParticipants = minParticipants;
+        draw.requirement = LibGridottoStorage.ParticipationRequirement.NONE;
+        
+        // Handle token transfer
+        if (initialPrize > 0) {
+            ILSP7DigitalAsset token = ILSP7DigitalAsset(tokenAddress);
+            token.transfer(msg.sender, address(this), initialPrize, true, "");
+        }
+        
         draw.tokenAddress = tokenAddress;
-        draw.initialPrize = prizeAmount;
-        draw.currentPrize = prizeAmount;
+        draw.initialPrize = initialPrize;
+        draw.currentPrize = initialPrize;
+        draw.currentPrizePool = initialPrize;
         
         draw.prizeConfig = LibGridottoStorage.DrawPrizeConfig({
-            model: LibGridottoStorage.PrizeModel.WINNER_TAKES_ALL,
+            model: LibGridottoStorage.PrizeModel.CREATOR_FUNDED,
             creatorContribution: 0,
-            addParticipationFees: true,
-            participationFeePercent: 10,
+            addParticipationFees: false,
+            participationFeePercent: creatorFeePercent,
             totalWinners: 1
         });
         
+        // Add to active draws
         l.activeUserDraws.push(drawId);
         l.userCreatedDraws[msg.sender].push(drawId);
         
-        // Update stats
-        LibAdminStorage.updateUserStats(msg.sender, true, false, false, 0, 0);
-        
-        emit TokenDrawCreated(drawId, msg.sender, tokenAddress);
+        emit TokenDrawCreated(drawId, msg.sender, tokenAddress, initialPrize);
         return drawId;
     }
     
     function createNFTDraw(
         address nftContract,
-        bytes32[] calldata tokenIds,
+        bytes32 tokenId,
         uint256 ticketPrice,
         uint256 duration,
-        uint256 maxTickets,
-        LibGridottoStorage.ParticipationRequirement requirement,
-        address requiredToken,
-        uint256 minTokenAmount
-    ) external payable notBanned notBlacklisted returns (uint256 drawId) {
+        uint256 minParticipants,
+        uint256 maxParticipants
+    ) external notBanned notBlacklisted returns (uint256 drawId) {
         require(nftContract != address(0), "Invalid NFT contract");
-        require(tokenIds.length > 0, "No NFTs provided");
         require(ticketPrice > 0, "Ticket price must be greater than 0");
         require(duration >= 1 hours && duration <= 30 days, "Invalid duration");
-        require(maxTickets > 0 && maxTickets <= LibAdminStorage.getMaxTicketsPerDraw(), "Invalid max tickets");
-        
-        // Transfer NFTs from creator
-        ILSP8IdentifiableDigitalAsset nft = ILSP8IdentifiableDigitalAsset(nftContract);
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            nft.transfer(msg.sender, address(this), tokenIds[i], true, "");
-        }
         
         LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
         drawId = l.nextDrawId++;
@@ -126,30 +119,33 @@ contract GridottoPhase3Facet {
         draw.startTime = block.timestamp;
         draw.endTime = block.timestamp + duration;
         draw.ticketPrice = ticketPrice;
-        draw.maxTickets = maxTickets;
-        draw.requirement = requirement;
-        draw.requiredToken = requiredToken;
-        draw.minTokenAmount = minTokenAmount;
+        draw.maxTickets = maxParticipants > 0 ? maxParticipants : 10000;
+        draw.minParticipants = minParticipants;
+        draw.requirement = LibGridottoStorage.ParticipationRequirement.NONE;
+
+        // Transfer NFTs from creator
+        ILSP8IdentifiableDigitalAsset nft = ILSP8IdentifiableDigitalAsset(nftContract);
+        nft.transfer(msg.sender, address(this), tokenId, true, "");
+        
         draw.nftContract = nftContract;
-        draw.nftTokenIds = tokenIds;
-        draw.initialPrize = msg.value;
-        draw.currentPrize = msg.value;
+        draw.nftTokenIds = new bytes32[](1);
+        draw.nftTokenIds[0] = tokenId;
+        draw.initialPrize = 0; // NFT draws don't have LYX prize
+        draw.currentPrizePool = 0;
         
         draw.prizeConfig = LibGridottoStorage.DrawPrizeConfig({
-            model: LibGridottoStorage.PrizeModel.WINNER_TAKES_ALL,
+            model: LibGridottoStorage.PrizeModel.CREATOR_FUNDED,
             creatorContribution: 0,
-            addParticipationFees: true,
-            participationFeePercent: 10,
+            addParticipationFees: false,
+            participationFeePercent: 0,
             totalWinners: 1
         });
         
+        // Add to active draws
         l.activeUserDraws.push(drawId);
         l.userCreatedDraws[msg.sender].push(drawId);
         
-        // Update stats
-        LibAdminStorage.updateUserStats(msg.sender, true, false, false, 0, 0);
-        
-        emit NFTDrawCreated(drawId, msg.sender, nftContract, tokenIds);
+        emit NFTDrawCreated(drawId, msg.sender, nftContract, draw.nftTokenIds);
         return drawId;
     }
     
@@ -355,6 +351,100 @@ contract GridottoPhase3Facet {
             nft.transfer(address(this), msg.sender, tokenIds[i], true, "");
             emit NFTPrizeClaimed(0, msg.sender, tokenIds[i]);
         }
+    }
+    
+    /**
+     * @notice Refund tickets for a draw that didn't meet minimum participants
+     * @param drawId The draw ID to refund
+     */
+    function refundDraw(uint256 drawId) external nonReentrant {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
+        
+        require(draw.creator != address(0), "Draw does not exist");
+        require(!draw.isCompleted, "Draw already completed");
+        
+        // Check if refund conditions are met
+        if (draw.minParticipants > 0 && draw.participants.length < draw.minParticipants) {
+            // Allow refund after grace period
+            uint256 gracePeriod = 7 days;
+            require(
+                block.timestamp >= draw.endTime + gracePeriod,
+                "Grace period not ended yet"
+            );
+        } else {
+            revert("Draw met minimum participants");
+        }
+        
+        // Mark as completed to prevent further actions
+        draw.isCompleted = true;
+        
+        // Refund all participants
+        for (uint256 i = 0; i < draw.participants.length; i++) {
+            address participant = draw.participants[i];
+            uint256 ticketsBought = draw.userTickets[participant];
+            uint256 refundAmount = ticketsBought * draw.ticketPrice;
+            
+            if (refundAmount > 0) {
+                (bool success, ) = payable(participant).call{value: refundAmount}("");
+                require(success, "Refund transfer failed");
+                
+                emit DrawRefunded(drawId, participant, refundAmount);
+            }
+        }
+        
+        // Return initial prize to creator
+        if (draw.initialPrize > 0) {
+            if (draw.drawType == LibGridottoStorage.DrawType.USER_LYX) {
+                (bool success, ) = payable(draw.creator).call{value: draw.initialPrize}("");
+                require(success, "Creator refund failed");
+            } else if (draw.drawType == LibGridottoStorage.DrawType.USER_LSP7) {
+                ILSP7DigitalAsset token = ILSP7DigitalAsset(draw.tokenAddress);
+                token.transfer(address(this), draw.creator, draw.initialPrize, true, "");
+            } else if (draw.drawType == LibGridottoStorage.DrawType.USER_LSP8) {
+                ILSP8IdentifiableDigitalAsset nft = ILSP8IdentifiableDigitalAsset(draw.nftContract);
+                for (uint256 i = 0; i < draw.nftTokenIds.length; i++) {
+                    nft.transfer(address(this), draw.creator, draw.nftTokenIds[i], true, "");
+                }
+            }
+        }
+        
+        emit UserDrawRefunded(drawId, draw.participants.length, draw.currentPrizePool);
+    }
+    
+    /**
+     * @notice Allow participants to claim refund individually
+     * @param drawId The draw ID to claim refund from
+     */
+    function claimRefund(uint256 drawId) external nonReentrant {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+        LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
+        
+        require(draw.creator != address(0), "Draw does not exist");
+        require(draw.userTickets[msg.sender] > 0, "No tickets purchased");
+        
+        // Check if refund conditions are met
+        require(draw.minParticipants > 0, "Draw has no min participants");
+        require(draw.participants.length < draw.minParticipants, "Draw met min participants");
+        
+        uint256 gracePeriod = 7 days;
+        require(
+            block.timestamp >= draw.endTime + gracePeriod,
+            "Grace period not ended yet"
+        );
+        
+        // Calculate refund
+        uint256 ticketsBought = draw.userTickets[msg.sender];
+        uint256 refundAmount = ticketsBought * draw.ticketPrice;
+        
+        // Clear user's tickets
+        draw.userTickets[msg.sender] = 0;
+        
+        // Transfer refund
+        (bool success, ) = payable(msg.sender).call{value: refundAmount}("");
+        require(success, "Refund transfer failed");
+        
+        emit RefundClaimed(drawId, msg.sender, refundAmount);
     }
     
     // Internal functions
