@@ -3,7 +3,7 @@
 ## 🎮 GridottoFacet - Base Lottery Functions
 
 ### 1. **buyTickets(uint256 amount)**
-- **Açıklama**: Resmi günlük çekiliş için bilet satın al
+- **Açıklama**: Resmi günlük çekiliş için bilet satın al  ##Haftalık çekiliş için olmalı günlük çekilişimiz yok :)##
 - **Parametreler**: 
   - `amount`: Alınacak bilet sayısı
 - **Ödeme**: `msg.value = amount * ticketPrice` (0.01 LYX per bilet)
@@ -44,7 +44,7 @@
 - **Returns**: 
   - `currentDraw`: Güncel çekiliş numarası
   - `currentMonthlyDraw`: Güncel aylık çekiliş numarası
-  - `drawTime`: Sonraki günlük çekiliş zamanı
+  - `drawTime`: Sonraki günlük çekiliş zamanı ##HAFTALIK##
   - `monthlyDrawTime`: Sonraki aylık çekiliş zamanı
 
 ## 🎨 GridottoPhase3Facet - Token & NFT Functions
@@ -64,13 +64,13 @@ function createTokenDraw(
 - **Açıklama**: LSP7 token ödüllü çekiliş oluştur
 - **Parametreler**:
   - `tokenAddress`: Ödül token adresi
-  - `prizeAmount`: Ödül miktarı
+  - `prizeAmount`: Ödül miktarı ##Bu belli olamaz ki kullanıcıların yatırdığı paraya göre olacak mesela bilet fiyatı 1 token 100 bilet satıldı başlangıç ödülü yok ise 100 token ödül olacak##
   - `ticketPriceLYX`: Bilet fiyatı (0 = ücretsiz) ⚡ **OPSİYONEL**
   - `duration`: Çekiliş süresi (saniye)
   - `minParticipants`: Min katılımcı (0 = limit yok) ⚡ **OPSİYONEL**
   - `maxParticipants`: Max katılımcı (0 = limit yok) ⚡ **OPSİYONEL**
-  - `creatorFeePercent`: Creator ücreti (0-50%) ⚡ **OPSİYONEL**
-- **Ödeme**: Platform ücreti (prizeAmount * %2)
+  - `creatorFeePercent`: Creator ücreti (0-10%) ⚡ **OPSİYONEL** ##%50 abartı olacağı için maksimum %10 fee alabilecek##
+- **Ödeme**: Platform ücreti (prizeAmount * %5) ##Platform ücreti her zaman her koşulda %5##
 - **Returns**: `uint256 drawId`
 - **UI Notları**:
   - Ücretsiz çekiliş için ticketPrice = 0
@@ -97,10 +97,10 @@ function createNFTDraw(
   - `duration`: Çekiliş süresi
   - `minParticipants`: Min katılımcı ⚡ **OPSİYONEL**
   - `maxParticipants`: Max katılımcı ⚡ **OPSİYONEL**
-  - `creatorFeePercent`: Creator ücreti (0-50%) ⚡ **OPSİYONEL**
-- **Ödeme**: Platform ücreti (0.002 LYX sabit)
+  - `creatorFeePercent`: Creator ücreti (0-50%) ⚡ **OPSİYONEL** ##KALDIRILACAK##
+- **Ödeme**: Platform ücreti (%5 LYX) ##Platform %5 ile çalışıyor##
 - **Returns**: `uint256 drawId`
-
+##NFT çekilişlerinde eğer ücret alınacaksa bu ücretin %5i platforma gelecek kalanı tamamen creatore gidecek##
 ### 3. **buyUserDrawTicket(uint256 drawId, uint256 amount)**
 - **Açıklama**: Kullanıcı çekilişine katıl
 - **Parametreler**:
@@ -116,7 +116,7 @@ function createNFTDraw(
 - **Koşullar**: 
   - Süre dolmuş olmalı
   - Min katılımcı sağlanmış olmalı
-- **Executor Ödülü**: Toplanan ücretlerin %1'i ⚡ **OTOMATİK**
+- **Executor Ödülü**: Toplanan ücretlerin %5'i ⚡ **OTOMATİK** ##EXECUTOR ÖDÜLÜ PLATFORM GENELİNDE %5 OLACAK BU MİKTAR ÖDÜL HAVUZUNDAN AYRI BİR ŞEKİLDE SAKLANIP KAZANANA VERİLECEK MİKTAR OLARAK GÖSTERİLMEYECEK TEK İSTİSNA TAMAMEN ÜCRETSİZ OLAN BİLET FİYATI YA DA ÖDÜLÜ TOKEN/LYX OLMAYAN NFT GİVEAWAYLERİNDE ÖDEME ALMAYACAK EXECUTOR##
 - **Events**: `UserDrawExecuted`
 
 ### 5. **claimTokenPrize(address token)**
@@ -150,7 +150,7 @@ struct AdvancedDrawConfig {
     
     // Ödül yapılandırması
     address prizeToken;          // Token/NFT adresi (LYX ise 0x0)
-    uint256 totalPrizeAmount;    // Toplam ödül (LYX/Token)
+    uint256 totalPrizeAmount;    // Toplam ödül (LYX/Token) ##DEDİĞİM GİBİ KALDIRILACAK ÇÜNKÜ TOPLAM ÖDÜLÜ ASLA BİLEMEYİZ EN FAZLA BAŞLANGIÇTA ANKETİ OLUŞTURAN NE KOYDUYSA O OLABİLİR##
     bytes32[] nftTokenIds;       // NFT'ler için token ID'ler
     
     // Multi-winner yapılandırması
@@ -164,8 +164,9 @@ struct AdvancedDrawConfig {
     uint256 minFollowers;        // Min takipçi sayısı
     
     // Ücretler ⚡ OPSİYONEL
-    uint256 creatorFeePercent;   // 0-50% arası, 0 = ücretsiz
-    uint256 platformFeePercent;  // Override platform fee
+    uint256 creatorFeePercent;   // 0-10% arası, 0 = ücretsiz ##MAKSİMUM %10 ALABİLİR CREATOR##
+    uint256 platformFeePercent;  // Override platform fee ##%5 ALACAK PLATFORM##
+    ## EXECUTORFEE AYRI BİR ŞEKİLDE SAKLANACAĞI İÇİN BURADA AYRILACAK##
     
     // Limitler ⚡ OPSİYONEL
     uint256 minParticipants;     // 0 = limit yok
@@ -193,13 +194,13 @@ struct PrizeTier {
 
 ### 2. **getAdvancedDrawInfo(uint256 drawId)**
 - **Açıklama**: Detaylı çekiliş bilgilerini al
-- **Returns**: Tüm draw config + güncel durum
+- **Returns**: Tüm draw config + güncel durum ##BURADA HANGİ BİLGİ NE SIRAYLA GELECEK YAZARSAN Uİ DAHA KOLAY YAPILIR##
 - **Gas**: View function
 
 ### 3. **getDrawExecutorReward(uint256 drawId)**
 - **Açıklama**: Çekilişi sonuçlandıracak kişinin alacağı ödülü hesapla
 - **Returns**: `uint256` - Executor ödülü (wei)
-- **Formül**: Toplanan ücretlerin %1'i
+- **Formül**: Toplanan ücretlerin %5'i ##TOPLANAN ÜCRETİN YÜZDE 5'i ANCAK LYX BAZLI NATİVE ÇEKİLİŞLERDE MAKSİMUM 5 LYX)
 - **UI Notu**: "Execute draw and earn X LYX" şeklinde göster
 
 ## 👨‍💼 AdminFacet - Admin Functions
@@ -209,11 +210,12 @@ struct PrizeTier {
 - **Parametreler**: 
   - `newFee`: Yeni ücret (10000 = %100, max %50)
 - **Yetki**: Sadece owner
-- **Default**: %2 (200)
+- **Default**: %5 ##DEFAULT %5 ALACAĞIZ##
 
 ### 2. **setDrawCreationFee(uint256 newFee)**
 - **Açıklama**: Çekiliş oluşturma ücretini ayarla
 - **Default**: 0.002 LYX
+- ##ÇEKİLİŞ OLUŞTURMAKTAN ÜCRET ALMAYACAĞIZ##
 
 ### 3. **withdrawPlatformFees()**
 - **Açıklama**: Biriken platform ücretlerini çek
@@ -264,7 +266,8 @@ struct PrizeTier {
 ### 2. **batchTransferLYX(address[] recipients, uint256[] amounts)**
 - **Açıklama**: Çoklu LYX transferi
 - **Kullanım**: Airdrop veya çoklu ödül dağıtımı
-
+- ##BU FONKSİYON NEREDE KULLANILACAK EMİN DEĞİLİM##
+- 
 ### 3. **batchGetUserDrawInfo(uint256[] drawIds)**
 - **Açıklama**: Çoklu çekiliş bilgisi sorgula
 - **Returns**: Her çekiliş için detaylar
@@ -277,7 +280,7 @@ struct PrizeTier {
 const createDraw = {
   drawType: "USER_LYX",        // Zorunlu
   duration: 86400,             // Zorunlu (1 gün)
-  totalPrizeAmount: 100,       // Zorunlu
+  totalPrizeAmount: 100,       // ZorunlU ##HAYIR ZORUNLU OLAMAZ BUNU BİLEMEYİZ EN FAZLA BAŞLANGIÇTA ÇEKİLİŞİ OLUŞTURAN BAŞLANGIÇ ÖDÜLÜ KOYMAK İSTERSE(OPSİYONEL) BU OLMALI ÖRNEĞİN 1 LYX KOYARAK ÇEKİLİŞ BAŞLATIP BİLETİ 0.10 LYXDEN SATABİLİR VE BİLET SATTIKÇA FEELER DÜŞÜLÜR TOPLAM ÖDÜLE EKLENİR##
   
   // Opsiyonel alanlar (UI'da toggle/checkbox ile)
   ticketPrice: 0,              // "Ücretsiz çekiliş" checkbox
@@ -319,7 +322,7 @@ if (prizes.totalLYX > 0 || prizes.hasTokenPrizes || prizes.hasNFTPrizes) {
 #### 6. **getUserDrawExecutorReward(uint256 drawId)**
 - **Açıklama**: Kullanıcı çekilişi için executor reward hesapla
 - **Returns**: `uint256` - Executor alacağı miktar
-- **Formül**: Toplanan ücretlerin %1'i
+- **Formül**: Toplanan ücretlerin %5'i ##YÜZDE 5 YA DA MAKSİMUM 5 LYX TOKENDE SINIR YOK DİREK %5##
 - **UI Notu**: Execute butonunda göster
 
 #### 7. **getDrawParticipants(uint256 drawId, uint256 offset, uint256 limit)**
@@ -335,6 +338,7 @@ if (prizes.totalLYX > 0 || prizes.hasTokenPrizes || prizes.hasNFTPrizes) {
   - `canParticipate`: Katılabilir mi (bool)
   - `reason`: Katılamazsa nedeni (string)
 - **UI Notu**: Katıl butonu aktif/pasif durumu için kullan
+  
 
 #### 9. **getUserParticipationHistory(address user, uint256 offset, uint256 limit)**
 - **Açıklama**: Kullanıcının katıldığı çekilişler
@@ -358,14 +362,14 @@ if (prizes.totalLYX > 0 || prizes.hasTokenPrizes || prizes.hasNFTPrizes) {
 ### ⚠️ İleride Eklenebilecek Fonksiyonlar
 1. **getPopularDraws()** - En çok katılımlı çekilişler
 2. **searchDraws(filter)** - Çekiliş arama/filtreleme
-3. **getRecentWinners()** - Son kazananlar listesi
+3. **getRecentWinners()** - Son kazananlar listesi ##LEADERBOARD İÇİN GEREKLİ HER ÇEKİLİŞİN KAZANANLARINI TOPLAMALIYIZ KAZANDIĞI ÖDÜL TİPİ VE MİKTARİ ÇEKİLİŞİ DÜZENLEYEN ÇEKİLİŞ İDSİ İLE BİRLİKTE##
 4. **getDrawAnalytics(drawId)** - Detaylı çekiliş analitiği
 
 ### 🔄 Executor Reward Sistemi
-- **Otomatik Hesaplama**: Toplanan ücretlerin %1'i
+- **Otomatik Hesaplama**: Toplanan ücretlerin %5'i ##YÜZDE 5 OLACAK##
 - **Ücretsiz Çekilişlerde**: Executor reward = 0
-- **Ücretli Çekilişlerde**: (totalTickets * ticketPrice * 1%)
-- **Platform Ücreti**: Ayrıca %2 platform ücreti kesilir
+- **Ücretli Çekilişlerde**: (totalTickets * ticketPrice * 5%)
+- **Platform Ücreti**: Ayrıca %5 platform ücreti kesilir
 
 ## 🎯 Özet
 
@@ -378,7 +382,7 @@ if (prizes.totalLYX > 0 || prizes.hasTokenPrizes || prizes.hasNFTPrizes) {
 6. `tiers = []` → Eşit ödül dağıtımı
 
 **Executor Rewards**:
-- Formül: `(ticketsSold * ticketPrice * 1%) / 100`
+- Formül: `(ticketsSold * ticketPrice * 5%) / 100`
 - Ücretsiz çekilişlerde: 0
 - `getDrawExecutorReward(drawId)` ile sorgula
 
