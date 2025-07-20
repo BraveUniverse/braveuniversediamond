@@ -15,7 +15,8 @@
     "MockLSP7Token": "0x7B9A5C8E2D3F6E1A4B8C0D9F7E6A5B3C2D1E8F9A",
     "MockLSP8NFT": "0x8C7B5A9E3D2F1E6A4C9B0D8F7E5A6C3B2D1F9E8A",
     "GridottoUIHelperFacet": "0x7A5fC79dd30afFCB4554CaBB9b69258fAcF0Db2a",
-    "GridottoBatchFacet": "0x3a0804dA2a0149806Df3E27b3A29CF8056B1213A"
+    "GridottoBatchFacet": "0x3a0804dA2a0149806Df3E27b3A29CF8056B1213A",
+    "GridottoUIHelperFacetUpdated": "0x6A654c9b8F9Cfe304429fAbe3F20B4d092996E2d"
   },
   "deployer": "0xYourDeployerAddress",
   "notes": {
@@ -24,5 +25,6 @@
     "phase4": "Advanced multi-winner draws with tier system",
     "admin": "Full admin management system",
     "oracle": "VRF oracle for random number generation"
-  }
+  },
+  "lastUpdate": "2025-07-20T14:44:00.823Z"
 }
