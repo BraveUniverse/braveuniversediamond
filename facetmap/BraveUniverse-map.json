@@ -3,5 +3,6 @@
   "ownership": ["OwnershipFacet"],
   "infrastructure": ["OracleFacet"],
   "gridotto": ["GridottoFacet", "GridottoPhase3Facet", "GridottoPhase4Facet"],
-  "admin": ["AdminFacet"]
+  "admin": ["AdminFacet"],
+  "helpers": ["GridottoUIHelperFacet", "GridottoBatchFacet"]
 }

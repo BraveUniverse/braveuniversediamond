@@ -1,0 +1,23 @@
+{
+  "network": "lukso-testnet",
+  "deploymentDate": "2025-07-20T00:59:12.856Z",
+  "contracts": {
+    "GridottoUIHelperFacet": "0xc874cD999d7f0E0dD2770a3597d16707a8517f2a",
+    "GridottoBatchFacet": "0x3a0804dA2a0149806Df3E27b3A29CF8056B1213A"
+  },
+  "functionSelectors": {
+    "uiHelper": [
+      "0x4a884bc9",
+      "0x68145d73",
+      "0xdf9de814",
+      "0xb27a87c3",
+      "0xa49a7934"
+    ],
+    "batch": [
+      "0xd1058e59",
+      "0x714a0945",
+      "0x4e94b8b7"
+    ]
+  },
+  "diamondCutTx": "0x37b7747ad8e8eb0be08bbae84b21717c1d4e6d76a0a4db9f3afb973f10e8e7bc"
+}
