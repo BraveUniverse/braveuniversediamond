@@ -5,6 +5,7 @@ import "../libs/LibGridottoStorage.sol";
 import "../libs/LibAdminStorage.sol";
 import "../interfaces/ILSP7DigitalAsset.sol";
 import "../interfaces/ILSP8IdentifiableDigitalAsset.sol";
+import "../interfaces/IOracleFacet.sol";
 
 contract GridottoExecutionFacet {
     using LibGridottoStorage for LibGridottoStorage.Layout;
@@ -112,13 +113,27 @@ contract GridottoExecutionFacet {
         
         draw.winners = new address[](numWinners);
         
-        // Simple random selection (can be improved with Chainlink VRF)
-        for (uint256 i = 0; i < numWinners; i++) {
-            uint256 randomIndex = uint256(keccak256(abi.encodePacked(
+        // Get random number from Oracle
+        uint256 randomSeed;
+        try IOracleFacet(address(this)).getRandomNumber() returns (uint256 value) {
+            randomSeed = value;
+        } catch {
+            // Fallback to pseudo-random if oracle fails
+            randomSeed = uint256(keccak256(abi.encodePacked(
                 block.timestamp,
                 block.prevrandao,
                 drawId,
-                i
+                draw.participants.length
+            )));
+        }
+        
+        // Select winners using the random seed
+        for (uint256 i = 0; i < numWinners; i++) {
+            // Generate unique random for each winner
+            uint256 randomIndex = uint256(keccak256(abi.encodePacked(
+                randomSeed,
+                i,
+                drawId
             ))) % draw.participants.length;
             
             draw.winners[i] = draw.participants[randomIndex];
@@ -242,6 +257,7 @@ contract GridottoExecutionFacet {
         uint256 drawId,
         uint256 executorReward
     ) internal {
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
         ILSP7DigitalAsset token = ILSP7DigitalAsset(draw.tokenAddress);
         uint256 totalPrize = draw.currentPrizePool;
         
@@ -257,7 +273,8 @@ contract GridottoExecutionFacet {
         if (draw.winnerConfig.enabled) {
             _distributeTokenPrizesToMultipleWinners(draw, totalPrize);
         } else {
-            token.transfer(address(this), draw.winners[0], totalPrize, true, "");
+            // Make token prize claimable instead of direct transfer
+            l.pendingTokenPrizes[draw.winners[0]][draw.tokenAddress] += totalPrize;
             
             // Track winner
             LibGridottoStorage.trackWinner(
@@ -278,7 +295,7 @@ contract GridottoExecutionFacet {
         LibGridottoStorage.UserDraw storage draw,
         uint256 totalPrize
     ) internal {
-        ILSP7DigitalAsset token = ILSP7DigitalAsset(draw.tokenAddress);
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
         
         if (draw.winnerConfig.tiers.length > 0) {
             // Tier-based distribution
@@ -289,7 +306,8 @@ contract GridottoExecutionFacet {
                 uint256 prizePerWinner = (totalPrize * tier.prizePercent) / 10000 / tier.winnersCount;
                 
                 for (uint256 j = 0; j < tier.winnersCount && winnerIndex < draw.winners.length; j++) {
-                    token.transfer(address(this), draw.winners[winnerIndex], prizePerWinner, true, "");
+                    // Make claimable instead of direct transfer
+                    l.pendingTokenPrizes[draw.winners[winnerIndex]][draw.tokenAddress] += prizePerWinner;
                     
                     // Track winner
                     LibGridottoStorage.trackWinner(
@@ -309,7 +327,8 @@ contract GridottoExecutionFacet {
             // Equal distribution
             uint256 prizePerWinner = totalPrize / draw.winners.length;
             for (uint256 i = 0; i < draw.winners.length; i++) {
-                token.transfer(address(this), draw.winners[i], prizePerWinner, true, "");
+                // Make claimable instead of direct transfer
+                l.pendingTokenPrizes[draw.winners[i]][draw.tokenAddress] += prizePerWinner;
                 
                 // Track winner
                 LibGridottoStorage.trackWinner(
@@ -329,7 +348,7 @@ contract GridottoExecutionFacet {
         LibGridottoStorage.UserDraw storage draw,
         uint256 drawId
     ) internal {
-        ILSP8IdentifiableDigitalAsset nft = ILSP8IdentifiableDigitalAsset(draw.nftAddress);
+        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
         
         if (draw.winnerConfig.enabled) {
             // Multi-winner NFT distribution
@@ -341,57 +360,57 @@ contract GridottoExecutionFacet {
                 
                 for (uint256 j = 0; j < tier.winnersCount && winnerIndex < draw.winners.length; j++) {
                     if (tier.specificNFTIds.length > j) {
-                        // Specific NFT for this tier winner
-                        nft.transfer(address(this), draw.winners[winnerIndex], tier.specificNFTIds[j], true, "");
+                        // Make NFT claimable instead of direct transfer
+                        l.pendingNFTPrizes[draw.winners[winnerIndex]][draw.nftAddress].push(tier.specificNFTIds[j]);
                         
                         // Track winner
                         LibGridottoStorage.trackWinner(
                             draw.winners[winnerIndex],
                             drawId,
                             draw.drawType,
-                            1,
-                            draw.nftAddress,
+                            0,
+                            address(0),
                             tier.specificNFTIds[j],
                             draw.creator
                         );
                     } else if (nftIndex < draw.nftTokenIds.length) {
-                        // Next available NFT
-                        nft.transfer(address(this), draw.winners[winnerIndex], draw.nftTokenIds[nftIndex], true, "");
+                        // Make NFT claimable instead of direct transfer
+                        l.pendingNFTPrizes[draw.winners[winnerIndex]][draw.nftAddress].push(draw.nftTokenIds[nftIndex]);
                         
                         // Track winner
                         LibGridottoStorage.trackWinner(
                             draw.winners[winnerIndex],
                             drawId,
                             draw.drawType,
-                            1,
-                            draw.nftAddress,
+                            0,
+                            address(0),
                             draw.nftTokenIds[nftIndex],
                             draw.creator
                         );
-                        
                         nftIndex++;
                     }
                     winnerIndex++;
                 }
             }
         } else {
-            // Single winner gets all NFTs
-            for (uint256 i = 0; i < draw.nftTokenIds.length; i++) {
-                nft.transfer(address(this), draw.winners[0], draw.nftTokenIds[i], true, "");
+            // Single winner gets first NFT
+            if (draw.nftTokenIds.length > 0) {
+                // Make NFT claimable instead of direct transfer
+                l.pendingNFTPrizes[draw.winners[0]][draw.nftAddress].push(draw.nftTokenIds[0]);
                 
-                // Track each NFT winner
+                // Track winner
                 LibGridottoStorage.trackWinner(
                     draw.winners[0],
                     drawId,
                     draw.drawType,
-                    1, // 1 NFT
-                    draw.nftAddress,
-                    draw.nftTokenIds[i],
+                    0,
+                    address(0),
+                    draw.nftTokenIds[0],
                     draw.creator
                 );
             }
         }
         
-        emit UserDrawCompleted(drawId, draw.winners, draw.nftTokenIds.length);
+        emit UserDrawCompleted(drawId, draw.winners, 0);
     }
 }
