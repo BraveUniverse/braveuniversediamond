@@ -1,5 +1,21 @@
 # Gridotto Detaylı Fonksiyon Parametreleri Dökümanı
 
+## 🔔 ÖNEMLİ GÜNCELLEMELER
+
+### 1. Oracle Entegrasyonu
+- Tüm çekilişlerde kazanan seçimi için Oracle kullanılıyor
+- Primary: `OracleFacet.getRandomNumber()`
+- Fallback: `block.prevrandao + timestamp` (Oracle fail durumunda)
+
+### 2. Claimable Ödül Sistemi
+- **TÜM ÖDÜLLER CLAIMABLE** - Otomatik transfer YOK
+- LYX ödülleri: `claimPrize()` ile talep edilir
+- Token ödülleri: `claimTokenPrize(address token)` ile talep edilir
+- NFT ödülleri: `claimNFTPrize(address nftContract)` ile talep edilir
+- **Gas ücreti kazanan tarafından ödenir**
+
+---
+
 ## GridottoFacet - Resmi Çekiliş Fonksiyonları
 
 ### 1. buyTickets(uint256 amount)
