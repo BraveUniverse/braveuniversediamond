@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 
 async function main() {
-    console.log("Deploying edge case improvements...");
+    console.log("Deploying edge case improvements (simplified)...");
     
     const [deployer] = await ethers.getSigners();
     console.log("Deploying with account:", deployer.address);
@@ -42,38 +42,11 @@ async function main() {
     // Prepare diamond cut
     const FacetCutAction = { Add: 0, Replace: 1, Remove: 2 };
     
-    console.log("\n4. Executing diamond cuts...");
+    console.log("\n4. Adding new functions only...");
     
     try {
-        // First, replace existing functions
-        const replaceCuts = [
-            // Replace executeUserDraw and cancelUserDraw
-            {
-                facetAddress: executionFacetAddress,
-                action: FacetCutAction.Replace,
-                functionSelectors: [
-                    executionFacet.interface.getFunction("executeUserDraw").selector,
-                    executionFacet.interface.getFunction("cancelUserDraw").selector
-                ]
-            },
-            // Replace existing Phase3 functions
-            {
-                facetAddress: phase3FacetAddress,
-                action: FacetCutAction.Replace,
-                functionSelectors: [
-                    phase3Facet.interface.getFunction("createTokenDraw").selector,
-                    phase3Facet.interface.getFunction("createNFTDraw").selector
-                ]
-            }
-        ];
-        
-        console.log("Replacing existing functions...");
-        const tx1 = await diamond.diamondCut(replaceCuts, ethers.ZeroAddress, "0x");
-        await tx1.wait();
-        console.log("Existing functions replaced!");
-        
-        // Then add new functions
-        const addCuts = [
+        // Only add completely new functions
+        const cuts = [
             // Add forceExecuteDraw
             {
                 facetAddress: executionFacetAddress,
@@ -103,10 +76,12 @@ async function main() {
             }
         ];
         
-        console.log("Adding new functions...");
-        const tx2 = await diamond.diamondCut(addCuts, ethers.ZeroAddress, "0x");
-        await tx2.wait();
-        console.log("New functions added!");
+        console.log("Executing diamond cut...");
+        const tx = await diamond.diamondCut(cuts, ethers.ZeroAddress, "0x");
+        console.log("Transaction sent:", tx.hash);
+        const receipt = await tx.wait();
+        console.log("Diamond cut executed successfully!");
+        console.log("Gas used:", receipt.gasUsed.toString());
         
         // Update deployment addresses
         if (!deploymentData.contracts) {
@@ -120,16 +95,8 @@ async function main() {
         fs.writeFileSync(deploymentPath, JSON.stringify(deploymentData, null, 2));
         
         console.log("\n✅ Deployment completed successfully!");
-        console.log("\n📋 Summary of improvements:");
-        console.log("1. Grace period for minimum participants (7 days)");
-        console.log("2. Owner can cancel/cleanup old draws");
-        console.log("3. Force execute for expired draws");
-        console.log("4. Refund mechanism for failed draws");
-        console.log("5. UI helper functions for better UX");
-        
         console.log("\n🆕 New functions added:");
         console.log("- forceExecuteDraw (owner only)");
-        console.log("- cancelUserDraw (enhanced with owner rights)");
         console.log("- refundDraw (batch refund)");
         console.log("- claimRefund (individual refund)");
         console.log("- getExpiredDrawsWaitingExecution");
@@ -141,9 +108,40 @@ async function main() {
         console.log("- GridottoPhase3Facet:", phase3FacetAddress);
         console.log("- GridottoUIHelperFacet:", uiHelperFacetAddress);
         
+        console.log("\n⚠️  Note: Existing functions were NOT replaced.");
+        console.log("To use updated executeUserDraw and cancelUserDraw logic,");
+        console.log("you need to manually replace those functions in a separate transaction.");
+        
     } catch (error: any) {
         console.error("Diamond cut failed:", error.message);
-        throw error;
+        
+        // Try adding functions one by one
+        console.log("\nTrying to add functions individually...");
+        
+        const functions = [
+            { facet: executionFacetAddress, func: "forceExecuteDraw", contract: executionFacet },
+            { facet: phase3FacetAddress, func: "refundDraw", contract: phase3Facet },
+            { facet: phase3FacetAddress, func: "claimRefund", contract: phase3Facet },
+            { facet: uiHelperFacetAddress, func: "getExpiredDrawsWaitingExecution", contract: uiHelperFacet },
+            { facet: uiHelperFacetAddress, func: "canExecuteDraw", contract: uiHelperFacet },
+            { facet: uiHelperFacetAddress, func: "getDrawsForCleanup", contract: uiHelperFacet }
+        ];
+        
+        for (const { facet, func, contract } of functions) {
+            try {
+                const cut = [{
+                    facetAddress: facet,
+                    action: FacetCutAction.Add,
+                    functionSelectors: [contract.interface.getFunction(func).selector]
+                }];
+                
+                const tx = await diamond.diamondCut(cut, ethers.ZeroAddress, "0x");
+                await tx.wait();
+                console.log(`✓ Added ${func}`);
+            } catch (err: any) {
+                console.log(`✗ Failed to add ${func}: ${err.message}`);
+            }
+        }
     }
 }
 
