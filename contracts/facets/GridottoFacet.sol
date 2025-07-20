@@ -1310,7 +1310,7 @@ contract GridottoFacet is IGridottoFacet {
                         nft.transfer(address(this), draw.winners[0], draw.nftTokenIds[i], true, "");
                         
                         // Track each NFT winner for leaderboard
-                        _trackWinner(
+                        LibGridottoStorage.trackWinner(
                             draw.winners[0],
                             drawId,
                             draw.drawType,
