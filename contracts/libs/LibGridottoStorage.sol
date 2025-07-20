@@ -209,4 +209,43 @@ library LibGridottoStorage {
             l.slot := position
         }
     }
+    
+    // Track winner for leaderboard
+    function trackWinner(
+        address winner,
+        uint256 drawId,
+        DrawType drawType,
+        uint256 prizeAmount,
+        address prizeToken,
+        bytes32 nftTokenId,
+        address drawCreator
+    ) internal {
+        Layout storage l = layout();
+        
+        // Initialize max if not set
+        if (l.maxRecentWinners == 0) {
+            l.maxRecentWinners = 100;
+        }
+        
+        // Add to recent winners
+        l.recentWinners.push(WinnerInfo({
+            winner: winner,
+            drawId: drawId,
+            drawType: drawType,
+            prizeAmount: prizeAmount,
+            prizeToken: prizeToken,
+            nftTokenId: nftTokenId,
+            drawCreator: drawCreator,
+            timestamp: block.timestamp
+        }));
+        
+        // Keep only the most recent winners
+        if (l.recentWinners.length > l.maxRecentWinners) {
+            // Remove oldest winner
+            for (uint256 i = 0; i < l.recentWinners.length - 1; i++) {
+                l.recentWinners[i] = l.recentWinners[i + 1];
+            }
+            l.recentWinners.pop();
+        }
+    }
 }

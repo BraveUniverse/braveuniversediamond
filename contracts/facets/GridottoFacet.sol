@@ -506,7 +506,7 @@ contract GridottoFacet is IGridottoFacet {
             l.pendingPrizes[winner] += prizeAmount;
             
             // Track winner for leaderboard
-            _trackWinner(
+            LibGridottoStorage.trackWinner(
                 winner,
                 drawNumber,
                 LibGridottoStorage.DrawType.OFFICIAL_DAILY,
@@ -566,7 +566,7 @@ contract GridottoFacet is IGridottoFacet {
             l.pendingPrizes[winner] += prizeAmount;
             
             // Track winner for leaderboard
-            _trackWinner(
+            LibGridottoStorage.trackWinner(
                 winner,
                 drawNumber,
                 LibGridottoStorage.DrawType.OFFICIAL_MONTHLY,
@@ -1247,7 +1247,7 @@ contract GridottoFacet is IGridottoFacet {
                     l.pendingPrizes[draw.winners[0]] += prizeAmount;
                     
                     // Track winner for leaderboard
-                    _trackWinner(
+                    LibGridottoStorage.trackWinner(
                         draw.winners[0],
                         drawId,
                         draw.drawType,
@@ -1674,42 +1674,5 @@ contract GridottoFacet is IGridottoFacet {
         return LibGridottoStorage.layout().creatorTokenProfit[creator][tokenAddress];
     }
 
-    // Internal helper to track winners
-    function _trackWinner(
-        address winner,
-        uint256 drawId,
-        LibGridottoStorage.DrawType drawType,
-        uint256 prizeAmount,
-        address prizeToken,
-        bytes32 nftTokenId,
-        address drawCreator
-    ) internal {
-        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
-        
-        // Initialize max if not set
-        if (l.maxRecentWinners == 0) {
-            l.maxRecentWinners = 100;
-        }
-        
-        // Add to recent winners
-        l.recentWinners.push(LibGridottoStorage.WinnerInfo({
-            winner: winner,
-            drawId: drawId,
-            drawType: drawType,
-            prizeAmount: prizeAmount,
-            prizeToken: prizeToken,
-            nftTokenId: nftTokenId,
-            drawCreator: drawCreator,
-            timestamp: block.timestamp
-        }));
-        
-        // Keep only the most recent winners
-        if (l.recentWinners.length > l.maxRecentWinners) {
-            // Remove oldest winner
-            for (uint256 i = 0; i < l.recentWinners.length - 1; i++) {
-                l.recentWinners[i] = l.recentWinners[i + 1];
-            }
-            l.recentWinners.pop();
-        }
-    }
+
 }

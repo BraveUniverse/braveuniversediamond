@@ -446,7 +446,7 @@ contract GridottoUIHelperFacet {
         
         isCompleted = draw.isCompleted;
         winners = draw.winners;
-        minParticipants = draw.minParticipants;
+        minParticipants = 0; // Not stored in UserDraw, using 0 as default
         maxParticipants = draw.maxTickets;
         requirement = draw.requirement;
         
