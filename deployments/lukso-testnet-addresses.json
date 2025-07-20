@@ -17,7 +17,8 @@
     "GridottoUIHelperFacet": "0x7A5fC79dd30afFCB4554CaBB9b69258fAcF0Db2a",
     "GridottoBatchFacet": "0x3a0804dA2a0149806Df3E27b3A29CF8056B1213A",
     "GridottoUIHelperFacetUpdated": "0x6A654c9b8F9Cfe304429fAbe3F20B4d092996E2d",
-    "GridottoExecutionFacetUpdated": "0x9B7984C91384Fb1c6d77d3419930649f9C30cE97"
+    "GridottoExecutionFacetUpdated": "0x9B7984C91384Fb1c6d77d3419930649f9C30cE97",
+    "GridottoMissingFacet": "0x362630096659c10F2b11d57e3a13a94F11E62685"
   },
   "deployer": "0xYourDeployerAddress",
   "notes": {
@@ -27,5 +28,5 @@
     "admin": "Full admin management system",
     "oracle": "VRF oracle for random number generation"
   },
-  "lastUpdate": "2025-07-20T14:56:12.519Z"
+  "lastUpdate": "2025-07-20T19:24:24.808Z"
 }
