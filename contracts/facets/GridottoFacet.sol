@@ -1280,7 +1280,7 @@ contract GridottoFacet is IGridottoFacet {
                     token.transfer(address(this), draw.winners[0], winnerPrize, true, "");
                     
                     // Track winner for leaderboard
-                    _trackWinner(
+                    LibGridottoStorage.trackWinner(
                         draw.winners[0],
                         drawId,
                         draw.drawType,
