@@ -15,43 +15,60 @@ async function main() {
     const adminFacetAddress = await adminFacet.getAddress();
     console.log("✅ New GridottoAdminFacet deployed at:", adminFacetAddress);
 
-    // Get only NEW function selectors
-    const newSelectors = [
+    // Get all function selectors
+    const adminSelectors = [
+        adminFacet.interface.getFunction("pauseSystem").selector,
+        adminFacet.interface.getFunction("unpauseSystem").selector,
+        adminFacet.interface.getFunction("isPaused").selector,
+        adminFacet.interface.getFunction("withdrawPlatformFees").selector,
+        adminFacet.interface.getFunction("withdrawTokenFees").selector,
+        adminFacet.interface.getFunction("getPlatformFeesLYX").selector,
+        adminFacet.interface.getFunction("getPlatformFeesToken").selector,
+        adminFacet.interface.getFunction("setFeePercentages").selector,
+        adminFacet.interface.getFunction("getSystemStats").selector,
         adminFacet.interface.getFunction("getNextDrawId").selector,
         adminFacet.interface.getFunction("getPlatformStatistics").selector,
+        adminFacet.interface.getFunction("emergencyWithdraw").selector,
+        adminFacet.interface.getFunction("forceExecuteDraw").selector,
     ];
 
-    console.log("\nNew selectors to add:", newSelectors);
+    console.log("\nAdmin selectors:", adminSelectors);
+    console.log("Total selectors:", adminSelectors.length);
 
-    // Add new functions to diamond
+    // Update facet in diamond
     const diamondCut = await ethers.getContractAt("DiamondCutFacet", DIAMOND_ADDRESS);
     
     const cut = [{
         facetAddress: adminFacetAddress,
-        action: 0, // Add (not replace)
-        functionSelectors: newSelectors
+        action: 1, // Replace
+        functionSelectors: adminSelectors
     }];
 
     const tx = await diamondCut.diamondCut(cut, ethers.ZeroAddress, "0x");
     await tx.wait();
     
-    console.log("✅ New admin functions added to diamond!");
-    
+    console.log("✅ Admin facet updated in diamond!");
+
     // Test the new functions
-    console.log("\n📊 Testing new functions:");
+    console.log("\n🧪 Testing new functions...");
     const admin = await ethers.getContractAt("GridottoAdminFacet", DIAMOND_ADDRESS);
     
-    const nextDrawId = await admin.getNextDrawId();
-    console.log("- Next Draw ID:", nextDrawId.toString());
-    
-    const stats = await admin.getPlatformStatistics();
-    console.log("- Platform Statistics:");
-    console.log("  - Total Draws:", stats.totalDrawsCreated.toString());
-    console.log("  - Total Tickets:", stats.totalTicketsSold.toString());
-    console.log("  - Platform Fees:", ethers.formatEther(stats.platformFeesLYX), "LYX");
-    console.log("  - Monthly Pool:", ethers.formatEther(stats.monthlyPoolBalance), "LYX");
-    console.log("  - Current Weekly Draw:", stats.currentWeeklyDrawId.toString());
-    console.log("  - Current Monthly Draw:", stats.currentMonthlyDrawId.toString());
+    try {
+        const nextDrawId = await admin.getNextDrawId();
+        console.log("✅ getNextDrawId() works! Next ID:", nextDrawId.toString());
+    } catch (error) {
+        console.log("❌ getNextDrawId() failed:", error);
+    }
+
+    try {
+        const stats = await admin.getPlatformStatistics();
+        console.log("✅ getPlatformStatistics() works!");
+        console.log("   - Total draws:", stats.totalDrawsCreated.toString());
+        console.log("   - Weekly draw ID:", stats.currentWeeklyDrawId.toString());
+        console.log("   - Monthly draw ID:", stats.currentMonthlyDrawId.toString());
+    } catch (error) {
+        console.log("❌ getPlatformStatistics() failed:", error);
+    }
 }
 
 main()

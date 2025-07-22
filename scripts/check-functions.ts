@@ -3,56 +3,71 @@ import { ethers } from "hardhat";
 const DIAMOND_ADDRESS = "0x5Ad808FAE645BA3682170467114e5b80A70bF276";
 
 async function main() {
-    console.log("🔍 Checking functions in Diamond...\n");
+    console.log("🔍 Checking functions on-chain...\n");
 
-    const admin = await ethers.getContractAt("GridottoAdminFacet", DIAMOND_ADDRESS);
-    
-    console.log("Testing getNextDrawId...");
-    try {
-        const nextDrawId = await admin.getNextDrawId();
-        console.log("✅ getNextDrawId works! Result:", nextDrawId.toString());
-    } catch (error: any) {
-        console.log("❌ getNextDrawId failed:", error.message);
-    }
-    
-    console.log("\nTesting getPlatformStatistics...");
-    try {
-        const stats = await admin.getPlatformStatistics();
-        console.log("✅ getPlatformStatistics works!");
-        console.log("- Total Draws:", stats.totalDrawsCreated.toString());
-        console.log("- Total Tickets:", stats.totalTicketsSold.toString());
-        console.log("- Platform Fees:", ethers.formatEther(stats.platformFeesLYX), "LYX");
-        console.log("- Monthly Pool:", ethers.formatEther(stats.monthlyPoolBalance), "LYX");
-        console.log("- Current Weekly Draw:", stats.currentWeeklyDrawId.toString());
-        console.log("- Current Monthly Draw:", stats.currentMonthlyDrawId.toString());
-    } catch (error: any) {
-        console.log("❌ getPlatformStatistics failed:", error.message);
-    }
-    
-    // Check with DiamondLoupe
-    console.log("\n🔍 Checking with DiamondLoupe...");
-    const loupe = await ethers.getContractAt("DiamondLoupeFacet", DIAMOND_ADDRESS);
+    const diamond = await ethers.getContractAt("DiamondLoupeFacet", DIAMOND_ADDRESS);
     
     // Get all facets
-    const facets = await loupe.facets();
-    console.log("\nTotal facets:", facets.length);
+    const facets = await diamond.facets();
+    console.log(`Found ${facets.length} facets\n`);
+
+    // Functions to check
+    const functionsToCheck = [
+        { name: "getNextDrawId", selector: "0x" },
+        { name: "getPlatformStatistics", selector: "0x" }
+    ];
+
+    // Calculate selectors
+    const adminFacet = await ethers.getContractFactory("GridottoAdminFacet");
     
-    // Find admin facet
-    for (const facet of facets) {
-        const selectors = facet.functionSelectors;
-        
-        // Check if it has admin functions
-        const adminInterface = admin.interface;
-        let hasAdminFunctions = false;
-        
-        for (const selector of selectors) {
-            try {
-                const func = adminInterface.getFunction(selector);
-                if (func.name === "getNextDrawId" || func.name === "getPlatformStatistics") {
-                    hasAdminFunctions = true;
-                    console.log(`Found ${func.name} in facet ${facet.facetAddress}`);
-                }
-            } catch {}
+    try {
+        functionsToCheck[0].selector = adminFacet.interface.getFunction("getNextDrawId").selector;
+        functionsToCheck[1].selector = adminFacet.interface.getFunction("getPlatformStatistics").selector;
+    } catch (e) {
+        console.error("Error getting selectors:", e);
+    }
+
+    console.log("Functions to check:");
+    functionsToCheck.forEach(f => {
+        console.log(`- ${f.name}: ${f.selector}`);
+    });
+
+    // Check each function
+    console.log("\nChecking on-chain...");
+    for (const func of functionsToCheck) {
+        try {
+            const facetAddress = await diamond.facetAddress(func.selector);
+            if (facetAddress !== ethers.ZeroAddress) {
+                console.log(`✅ ${func.name} exists at facet: ${facetAddress}`);
+            } else {
+                console.log(`❌ ${func.name} NOT FOUND on-chain`);
+            }
+        } catch (e) {
+            console.log(`❌ ${func.name} NOT FOUND on-chain (error)`);
+        }
+    }
+
+    // List all selectors in AdminFacet
+    console.log("\n📋 All AdminFacet functions:");
+    const adminSelectors = Object.keys(adminFacet.interface.functions).map(name => {
+        const func = adminFacet.interface.getFunction(name);
+        return { name, selector: func.selector };
+    });
+    
+    adminSelectors.forEach(f => {
+        console.log(`- ${f.name}: ${f.selector}`);
+    });
+
+    // Check which AdminFacet functions are on-chain
+    console.log("\n🔍 Checking which AdminFacet functions are deployed:");
+    for (const func of adminSelectors) {
+        try {
+            const facetAddress = await diamond.facetAddress(func.selector);
+            if (facetAddress !== ethers.ZeroAddress) {
+                console.log(`✅ ${func.name}`);
+            }
+        } catch (e) {
+            // Silent fail
         }
     }
 }
