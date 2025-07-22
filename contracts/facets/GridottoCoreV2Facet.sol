@@ -338,13 +338,21 @@ contract GridottoCoreV2Facet {
     ) {
         LibGridottoStorageV2.Draw storage draw = LibGridottoStorageV2.layout().draws[drawId];
         
+        // Calculate ticketsSold from participants if stored value is 0
+        uint256 calculatedTickets = draw.ticketsSold;
+        if (calculatedTickets == 0 && draw.participants.length > 0) {
+            for (uint256 i = 0; i < draw.participants.length; i++) {
+                calculatedTickets += draw.ticketCount[draw.participants[i]];
+            }
+        }
+        
         return (
             draw.creator,
             draw.drawType,
             draw.tokenAddress,
             draw.config.ticketPrice,
             draw.config.maxTickets,
-            draw.ticketsSold,
+            calculatedTickets, // Use calculated value
             draw.prizePool,
             draw.startTime,
             draw.endTime,
