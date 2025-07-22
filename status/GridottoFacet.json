@@ -1,0 +1,13 @@
+{
+  "facet": "GridottoFacet",
+  "status": "BUILD_READY",
+  "testCoverage": 100,
+  "multiUserTested": true,
+  "checklistComplete": true,
+  "gasSnapshotTakenAt": "2025-07-22T15:17:24.725Z",
+  "abiGenerated": true,
+  "facetMapLinked": true,
+  "deployedAt": "2025-07-22T15:17:24.725Z",
+  "deployedAddress": "0x280B1EF2F7729B18f7b46711bA5ED28be6e6163f",
+  "network": "luksoTestnet"
+}

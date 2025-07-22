@@ -3,6 +3,7 @@
   "diamondCutFacet": "0x7C1BedB4DB36c95f810361aC291E50e1719AE4BF",
   "diamondLoupeFacet": "0x8C272e3e0a3B0dB07c152F38981c3a04021a6377",
   "ownershipFacet": "0xc6Ca514Ab32458bf35c04f908463345149a3c6A8",
-  "deployedAt": "2025-07-18T21:37:00.925Z",
-  "network": "luksoTestnet"
+  "deployedAt": "2025-07-22T15:17:24.724Z",
+  "network": "luksoTestnet",
+  "gridottoFacet": "0x280B1EF2F7729B18f7b46711bA5ED28be6e6163f"
 }

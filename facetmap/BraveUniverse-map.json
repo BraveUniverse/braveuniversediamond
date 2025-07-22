@@ -1,4 +1,13 @@
 {
-  "core": ["BraveUniverseDiamond", "DiamondCutFacet", "DiamondLoupeFacet"],
-  "ownership": ["OwnershipFacet"]
+  "core": [
+    "BraveUniverseDiamond",
+    "DiamondCutFacet",
+    "DiamondLoupeFacet"
+  ],
+  "ownership": [
+    "OwnershipFacet"
+  ],
+  "games": [
+    "GridottoFacet"
+  ]
 }
