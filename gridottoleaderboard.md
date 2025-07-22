@@ -13,6 +13,14 @@ The Gridotto Leaderboard system provides comprehensive tracking and ranking of p
 - **Address**: Part of Diamond Proxy at `0x5Ad808FAE645BA3682170467114e5b80A70bF276`
 - **Network**: LUKSO Testnet
 
+### GridottoFixedViewFacet
+- **Address**: Part of Diamond Proxy at `0x5Ad808FAE645BA3682170467114e5b80A70bF276`
+- **Network**: LUKSO Testnet
+
+### GridottoFixedPurchaseFacet
+- **Address**: Part of Diamond Proxy at `0x5Ad808FAE645BA3682170467114e5b80A70bF276`
+- **Network**: LUKSO Testnet
+
 ## Leaderboard Categories
 
 ### 1. Top Winners - Lucky Players 🏆
@@ -168,9 +176,9 @@ console.log(`User has ${tickets} tickets (${chance/100}% winning chance)`);
 
 ## Test Scripts
 
-### Run Complete Test
+### Run Complete Working Test
 ```bash
-npx hardhat run scripts/final-complete-test.ts --network luksoTestnet
+npx hardhat run scripts/final-working-test.ts --network luksoTestnet
 ```
 
 ### Check Leaderboard Only
@@ -178,15 +186,26 @@ npx hardhat run scripts/final-complete-test.ts --network luksoTestnet
 npx hardhat run scripts/simple-leaderboard-test.ts --network luksoTestnet
 ```
 
-## Known Issues
+### Debug Draw Data
+```bash
+npx hardhat run scripts/debug-draw-data.ts --network luksoTestnet
+```
 
-### Storage Mapping Issue
-There is currently a storage mapping issue in the diamond proxy that causes incorrect data to be returned from the basic `getUserDraw` function. Use the enhanced view functions in `GridottoViewFacet` for accurate data:
+## Fixed Functions
 
-- ✅ Use `getDrawTiming()` for accurate timestamps
-- ✅ Use `getUserDrawInfo()` for user participation data
-- ✅ Use `canExecuteDraw()` to check execution eligibility
-- ❌ Avoid `getUserDraw()` - returns incorrect field mapping
+### Storage Mapping Issue - RESOLVED
+The storage mapping issue has been resolved with new facets:
+
+#### GridottoFixedViewFacet
+- ✅ Use `getUserDrawFixed()` for complete draw data
+- ✅ Use `isDrawActive()` to check if draw accepts tickets
+- ✅ Use `getDrawStats()` for comprehensive statistics
+- ✅ Use `getActiveDraws()` to list all active draws
+
+#### GridottoFixedPurchaseFacet
+- ✅ Use `buyTicketsFixed()` instead of `buyUserDrawTicket()`
+- ✅ Use `getTicketCost()` to calculate purchase cost
+- ✅ Use `buyMultipleDrawsFixed()` for batch purchases
 
 ## Gas Considerations
 
