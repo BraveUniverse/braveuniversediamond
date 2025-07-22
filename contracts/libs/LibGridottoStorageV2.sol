@@ -75,6 +75,8 @@ library LibGridottoStorageV2 {
         
         // Monthly ticket tracking
         mapping(address => MonthlyTickets) userMonthlyTickets;
+        address[] monthlyParticipants; // List of users with monthly tickets
+        mapping(address => bool) isMonthlyParticipant; // Quick lookup
         
         // Platform draws
         uint256 currentWeeklyDrawId;

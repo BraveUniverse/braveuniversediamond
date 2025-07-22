@@ -227,15 +227,45 @@ contract GridottoPlatformDrawsFacet {
         LibGridottoStorageV2.Layout storage s = LibGridottoStorageV2.layout();
         LibGridottoStorageV2.Draw storage draw = s.draws[drawId];
         
-        // This would need to iterate through all users who have monthly tickets
-        // In production, this should be optimized with events or a separate tracking mechanism
-        // For now, this is a placeholder that would need proper implementation
+        uint256 totalTickets = 0;
+        
+        // Add all monthly participants
+        for (uint256 i = 0; i < s.monthlyParticipants.length; i++) {
+            address participant = s.monthlyParticipants[i];
+            LibGridottoStorageV2.MonthlyTickets storage tickets = s.userMonthlyTickets[participant];
+            
+            uint256 userTickets = tickets.fromWeekly + tickets.fromCreating + tickets.fromParticipating;
+            
+            if (userTickets > 0) {
+                draw.participants.push(participant);
+                draw.ticketCount[participant] = userTickets;
+                draw.hasParticipated[participant] = true;
+                totalTickets += userTickets;
+            }
+        }
+        
+        draw.ticketsSold = totalTickets;
     }
     
-    // Reset all monthly tickets (placeholder - needs optimization)
+    // Reset all monthly tickets
     function _resetAllMonthlyTickets() internal {
-        // This would need to reset all users' monthly tickets
-        // In production, this should be event-based or use a different mechanism
+        LibGridottoStorageV2.Layout storage s = LibGridottoStorageV2.layout();
+        
+        // Reset all participants
+        for (uint256 i = 0; i < s.monthlyParticipants.length; i++) {
+            address participant = s.monthlyParticipants[i];
+            LibGridottoStorageV2.MonthlyTickets storage tickets = s.userMonthlyTickets[participant];
+            
+            tickets.fromWeekly = 0;
+            tickets.fromCreating = 0;
+            tickets.fromParticipating = 0;
+            tickets.lastResetTime = block.timestamp;
+            
+            s.isMonthlyParticipant[participant] = false;
+        }
+        
+        // Clear the participants array
+        delete s.monthlyParticipants;
     }
     
     // Get current platform draws info

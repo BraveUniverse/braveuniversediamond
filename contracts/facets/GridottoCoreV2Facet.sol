@@ -135,6 +135,7 @@ contract GridottoCoreV2Facet {
         _checkMonthlyReset(user);
         
         monthlyTickets.fromWeekly += tickets;
+        _addToMonthlyParticipants(user);
         emit MonthlyTicketsAwarded(user, tickets, "Weekly participation");
     }
     
@@ -147,6 +148,7 @@ contract GridottoCoreV2Facet {
         
         if (monthlyTickets.fromCreating < 5) {
             monthlyTickets.fromCreating += 1;
+            _addToMonthlyParticipants(user);
             emit MonthlyTicketsAwarded(user, 1, "Draw creation");
         }
     }
@@ -161,7 +163,18 @@ contract GridottoCoreV2Facet {
         if (monthlyTickets.fromParticipating < 15 && !monthlyTickets.participatedDraws[drawId]) {
             monthlyTickets.fromParticipating += 1;
             monthlyTickets.participatedDraws[drawId] = true;
+            _addToMonthlyParticipants(user);
             emit MonthlyTicketsAwarded(user, 1, "Draw participation");
+        }
+    }
+    
+    // Add user to monthly participants list if not already there
+    function _addToMonthlyParticipants(address user) internal {
+        LibGridottoStorageV2.Layout storage s = LibGridottoStorageV2.layout();
+        
+        if (!s.isMonthlyParticipant[user]) {
+            s.monthlyParticipants.push(user);
+            s.isMonthlyParticipant[user] = true;
         }
     }
     
