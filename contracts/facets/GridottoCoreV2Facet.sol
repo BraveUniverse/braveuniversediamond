@@ -14,6 +14,103 @@ contract GridottoCoreV2Facet {
     
     modifier notPaused() { require(!LibGridottoStorageV2.layout().paused, "System paused"); _; }
     
+    // Create Token Draw (LSP7)
+    function createTokenDraw(
+        address tokenAddress,
+        uint256 ticketPrice,
+        uint256 maxTickets,
+        uint256 duration,
+        uint256 minParticipants,
+        uint256 platformFeePercent,
+        uint256 initialPrize
+    ) external notPaused returns (uint256 drawId) {
+        require(tokenAddress != address(0), "Invalid token");
+        require(ticketPrice > 0, "Invalid ticket price");
+        require(maxTickets > 0, "Invalid max tickets");
+        require(duration >= 60 && duration <= 30 days, "Invalid duration");
+        require(platformFeePercent <= 2000, "Fee too high");
+        
+        LibGridottoStorageV2.Layout storage s = LibGridottoStorageV2.layout();
+        drawId = ++s.nextDrawId;
+        
+        LibGridottoStorageV2.Draw storage draw = s.draws[drawId];
+        draw.creator = msg.sender;
+        draw.drawType = LibGridottoStorageV2.DrawType.USER_LSP7;
+        draw.tokenAddress = tokenAddress;
+        draw.config = LibGridottoStorageV2.DrawConfig({
+            ticketPrice: ticketPrice,
+            maxTickets: maxTickets,
+            duration: duration,
+            minParticipants: minParticipants,
+            platformFeePercent: platformFeePercent
+        });
+        draw.startTime = block.timestamp;
+        draw.endTime = block.timestamp + duration;
+        
+        if (initialPrize > 0) {
+            ILSP7(tokenAddress).transfer(msg.sender, address(this), initialPrize, true, "");
+            draw.creatorContribution = initialPrize;
+            draw.prizePool = initialPrize;
+        }
+        
+        s.totalDrawsCreated++;
+        s.userDrawsCreated[msg.sender]++;
+        s.userDrawHistory[msg.sender].push(drawId);
+        
+        _awardMonthlyTicketsForCreating(msg.sender);
+        
+        emit DrawCreated(drawId, msg.sender, LibGridottoStorageV2.DrawType.USER_LSP7);
+    }
+    
+    // Create NFT Draw (LSP8)
+    function createNFTDraw(
+        address nftContract,
+        bytes32[] memory nftTokenIds,
+        uint256 ticketPrice,
+        uint256 maxTickets,
+        uint256 duration,
+        uint256 minParticipants,
+        uint256 platformFeePercent
+    ) external notPaused returns (uint256 drawId) {
+        require(nftContract != address(0), "Invalid NFT contract");
+        require(nftTokenIds.length > 0, "No NFTs provided");
+        require(maxTickets > 0, "Invalid max tickets");
+        require(duration >= 60 && duration <= 30 days, "Invalid duration");
+        require(platformFeePercent <= 2000, "Fee too high");
+        
+        LibGridottoStorageV2.Layout storage s = LibGridottoStorageV2.layout();
+        drawId = ++s.nextDrawId;
+        
+        LibGridottoStorageV2.Draw storage draw = s.draws[drawId];
+        draw.creator = msg.sender;
+        draw.drawType = LibGridottoStorageV2.DrawType.USER_LSP8;
+        draw.tokenAddress = nftContract;
+        draw.nftTokenIds = nftTokenIds;
+        draw.config = LibGridottoStorageV2.DrawConfig({
+            ticketPrice: ticketPrice,
+            maxTickets: maxTickets,
+            duration: duration,
+            minParticipants: minParticipants,
+            platformFeePercent: platformFeePercent
+        });
+        draw.startTime = block.timestamp;
+        draw.endTime = block.timestamp + duration;
+        
+        // Transfer NFTs to contract
+        ILSP8 nft = ILSP8(nftContract);
+        for (uint256 i = 0; i < nftTokenIds.length; i++) {
+            nft.transfer(msg.sender, address(this), nftTokenIds[i], true, "");
+        }
+        
+        s.totalDrawsCreated++;
+        s.userDrawsCreated[msg.sender]++;
+        s.userDrawHistory[msg.sender].push(drawId);
+        
+        _awardMonthlyTicketsForCreating(msg.sender);
+        
+        emit DrawCreated(drawId, msg.sender, LibGridottoStorageV2.DrawType.USER_LSP8);
+    }
+    
     // Create LYX Draw
     function createLYXDraw(
         uint256 ticketPrice,
@@ -94,8 +191,9 @@ contract GridottoCoreV2Facet {
                 require(success, "Refund failed");
             }
         } else if (draw.drawType == LibGridottoStorageV2.DrawType.USER_LSP7) {
-            // Handle token payment (implementation needed)
-            revert("LSP7 payment not implemented in this example");
+            // Handle token payment
+            ILSP7(draw.tokenAddress).transfer(msg.sender, address(this), totalCost, true, "");
+            draw.prizePool += totalCost;
         }
         
         // Update participant data
@@ -258,4 +356,13 @@ contract GridottoCoreV2Facet {
             draw.monthlyPoolContribution
         );
     }
+}
+
+// Interfaces
+interface ILSP7 {
+    function transfer(address from, address to, uint256 amount, bool force, bytes memory data) external;
+}
+
+interface ILSP8 {
+    function transfer(address from, address to, bytes32 tokenId, bool force, bytes memory data) external;
 }
