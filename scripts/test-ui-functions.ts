@@ -5,12 +5,12 @@ const DIAMOND_ADDRESS = "0x5Ad808FAE645BA3682170467114e5b80A70bF276";
 async function main() {
     console.log("🔍 Testing UI Functions\n");
 
-    // Use the combined Diamond ABI
-    const Diamond = await ethers.getContractAt("GridottoDiamond", DIAMOND_ADDRESS);
+    // Use AdminFacet ABI
+    const admin = await ethers.getContractAt("GridottoAdminFacet", DIAMOND_ADDRESS);
     
     console.log("1. Testing getNextDrawId()...");
     try {
-        const nextDrawId = await Diamond.getNextDrawId();
+        const nextDrawId = await admin.getNextDrawId();
         console.log("✅ Next Draw ID:", nextDrawId.toString());
     } catch (error: any) {
         console.log("❌ Error:", error.message);
@@ -18,7 +18,7 @@ async function main() {
 
     console.log("\n2. Testing getPlatformStatistics()...");
     try {
-        const stats = await Diamond.getPlatformStatistics();
+        const stats = await admin.getPlatformStatistics();
         console.log("✅ Platform Statistics:");
         console.log("   - Total Draws:", stats.totalDrawsCreated.toString());
         console.log("   - Total Tickets:", stats.totalTicketsSold.toString());
@@ -34,7 +34,7 @@ async function main() {
 
     console.log("\n3. Testing getSystemStats()...");
     try {
-        const sysStats = await Diamond.getSystemStats();
+        const sysStats = await admin.getSystemStats();
         console.log("✅ System Stats:");
         console.log("   - Total Draws:", sysStats.totalDrawsCreated.toString());
         console.log("   - Total Tickets:", sysStats.totalTicketsSold.toString());
@@ -49,18 +49,28 @@ async function main() {
     console.log("// Using ethers.js v6");
     console.log("import { ethers } from 'ethers';");
     console.log("import GridottoDiamondABI from './abis/GridottoDiamond.json';");
+    console.log("// OR use individual facet ABIs:");
+    console.log("import AdminABI from './abis/GridottoAdminFacet.json';");
     console.log("");
     console.log("const DIAMOND_ADDRESS = '0x5Ad808FAE645BA3682170467114e5b80A70bF276';");
     console.log("");
     console.log("// Initialize contract");
     console.log("const provider = new ethers.BrowserProvider(window.ethereum);");
     console.log("const signer = await provider.getSigner();");
+    console.log("");
+    console.log("// Option 1: Use combined Diamond ABI");
     console.log("const diamond = new ethers.Contract(DIAMOND_ADDRESS, GridottoDiamondABI, signer);");
     console.log("");
+    console.log("// Option 2: Use specific facet ABI");
+    console.log("const admin = new ethers.Contract(DIAMOND_ADDRESS, AdminABI, signer);");
+    console.log("");
     console.log("// Call functions");
-    console.log("const nextDrawId = await diamond.getNextDrawId();");
-    console.log("const stats = await diamond.getPlatformStatistics();");
+    console.log("const nextDrawId = await admin.getNextDrawId();");
+    console.log("const stats = await admin.getPlatformStatistics();");
     console.log("```");
+
+    console.log("\n⚠️  Important: Make sure you're using the correct ABI!");
+    console.log("The functions getNextDrawId() and getPlatformStatistics() are in GridottoAdminFacet.");
 }
 
 main()
