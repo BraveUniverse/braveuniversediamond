@@ -993,6 +993,20 @@
   },
   {
     "type": "function",
+    "name": "getNextDrawId",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": ""
+      }
+    ]
+  },
+  {
+    "type": "function",
     "name": "getPlatformFeesLYX",
     "constant": true,
     "stateMutability": "view",
@@ -1021,6 +1035,48 @@
       {
         "type": "uint256",
         "name": ""
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getPlatformStatistics",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": "totalDrawsCreated"
+      },
+      {
+        "type": "uint256",
+        "name": "totalTicketsSold"
+      },
+      {
+        "type": "uint256",
+        "name": "totalPrizesDistributed"
+      },
+      {
+        "type": "uint256",
+        "name": "totalExecutions"
+      },
+      {
+        "type": "uint256",
+        "name": "platformFeesLYX"
+      },
+      {
+        "type": "uint256",
+        "name": "monthlyPoolBalance"
+      },
+      {
+        "type": "uint256",
+        "name": "currentWeeklyDrawId"
+      },
+      {
+        "type": "uint256",
+        "name": "currentMonthlyDrawId"
       }
     ]
   },

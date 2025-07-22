@@ -102,6 +102,35 @@ contract GridottoAdminFacet {
         );
     }
     
+    // Get next draw ID
+    function getNextDrawId() external view returns (uint256) {
+        return LibGridottoStorageV2.layout().nextDrawId;
+    }
+    
+    // Platform Statistics (alias for getSystemStats with additional data)
+    function getPlatformStatistics() external view returns (
+        uint256 totalDrawsCreated,
+        uint256 totalTicketsSold,
+        uint256 totalPrizesDistributed,
+        uint256 totalExecutions,
+        uint256 platformFeesLYX,
+        uint256 monthlyPoolBalance,
+        uint256 currentWeeklyDrawId,
+        uint256 currentMonthlyDrawId
+    ) {
+        LibGridottoStorageV2.Layout storage s = LibGridottoStorageV2.layout();
+        return (
+            s.totalDrawsCreated,
+            s.totalTicketsSold,
+            s.totalPrizesDistributed,
+            s.totalExecutions,
+            s.platformFeesLYX,
+            s.monthlyPoolBalance,
+            s.currentWeeklyDrawId,
+            s.currentMonthlyDrawId
+        );
+    }
+    
     // Emergency Functions
     function emergencyWithdraw() external onlyOwner {
         uint256 balance = address(this).balance;
