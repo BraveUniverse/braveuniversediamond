@@ -25,6 +25,61 @@ contract GridottoCoreFacet {
     
     // ============ Draw Creation Functions ============
     
+    /**
+     * @notice Create an NFT draw (LSP8)
+     * @param nftContract NFT contract address
+     * @param nftTokenIds Array of NFT token IDs to give as prizes
+     * @param ticketPrice Price per ticket (0 for free draw)
+     * @param maxTickets Maximum tickets available
+     * @param duration Draw duration in seconds
+     * @param minParticipants Minimum participants required
+     * @param platformFeePercent Platform fee percentage
+     */
+    function createNFTDraw(
+        address nftContract,
+        bytes32[] memory nftTokenIds,
+        uint256 ticketPrice,
+        uint256 maxTickets,
+        uint256 duration,
+        uint256 minParticipants,
+        uint256 platformFeePercent
+    ) external notPaused returns (uint256 drawId) {
+        require(nftContract != address(0), "Invalid NFT contract");
+        require(nftTokenIds.length > 0, "No NFTs provided");
+        require(maxTickets > 0, "Invalid max tickets");
+        require(duration >= 60 && duration <= 30 days, "Invalid duration");
+        require(platformFeePercent <= 2000, "Fee too high");
+        
+        LibGridottoStorageSimple.Layout storage s = LibGridottoStorageSimple.layout();
+        drawId = ++s.nextDrawId;
+        
+        LibGridottoStorageSimple.Draw storage draw = s.draws[drawId];
+        draw.creator = msg.sender;
+        draw.drawType = LibGridottoStorageSimple.DrawType.USER_LSP8;
+        draw.tokenAddress = nftContract;
+        draw.nftTokenIds = nftTokenIds;
+        draw.config = LibGridottoStorageSimple.DrawConfig({
+            ticketPrice: ticketPrice,
+            maxTickets: maxTickets,
+            duration: duration,
+            minParticipants: minParticipants,
+            platformFeePercent: platformFeePercent
+        });
+        draw.startTime = block.timestamp;
+        draw.endTime = block.timestamp + duration;
+        
+        // Transfer NFTs to contract
+        ILSP8 nft = ILSP8(nftContract);
+        for (uint256 i = 0; i < nftTokenIds.length; i++) {
+            nft.transfer(msg.sender, address(this), nftTokenIds[i], true, "");
+        }
+        
+        s.totalDrawsCreated++;
+        s.userDrawsCreated[msg.sender]++;
+        
+        emit DrawCreated(drawId, msg.sender, LibGridottoStorageSimple.DrawType.USER_LSP8);
+    }
+    
     function createLYXDraw(
         uint256 ticketPrice,
         uint256 maxTickets,
@@ -132,6 +187,16 @@ contract GridottoCoreFacet {
         } else if (draw.drawType == LibGridottoStorageSimple.DrawType.USER_LSP7) {
             ILSP7(draw.tokenAddress).transfer(msg.sender, address(this), totalCost, true, "");
             draw.prizePool += totalCost;
+        } else if (draw.drawType == LibGridottoStorageSimple.DrawType.USER_LSP8) {
+            // For NFT draws with ticket price, payment goes to prize pool
+            require(msg.value >= totalCost, "Insufficient payment");
+            draw.prizePool += totalCost;
+            
+            // Refund excess
+            if (msg.value > totalCost) {
+                (bool success, ) = msg.sender.call{value: msg.value - totalCost}("");
+                require(success, "Refund failed");
+            }
         }
         
         // Update participant data
@@ -274,4 +339,10 @@ contract GridottoCoreFacet {
 interface ILSP7 {
     function transfer(address from, address to, uint256 amount, bool force, bytes memory data) external;
     function balanceOf(address account) external view returns (uint256);
+}
+
+// Interface for LSP8 NFT
+interface ILSP8 {
+    function transfer(address from, address to, bytes32 tokenId, bool force, bytes memory data) external;
+    function tokenOwnerOf(bytes32 tokenId) external view returns (address);
 }

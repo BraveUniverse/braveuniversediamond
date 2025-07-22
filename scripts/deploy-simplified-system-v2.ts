@@ -24,23 +24,23 @@ async function main() {
     const coreFacetAddress = await coreFacet.getAddress();
     console.log("✅ GridottoCoreFacet deployed:", coreFacetAddress);
 
-    const GridottoExecutionFacetSimple = await ethers.getContractFactory("GridottoExecutionFacetSimple");
-    const executionFacet = await GridottoExecutionFacetSimple.deploy();
+    const GridottoExecutionFacet = await ethers.getContractFactory("GridottoExecutionFacet");
+    const executionFacet = await GridottoExecutionFacet.deploy();
     await executionFacet.waitForDeployment();
     const executionFacetAddress = await executionFacet.getAddress();
-    console.log("✅ GridottoExecutionFacetSimple deployed:", executionFacetAddress);
+    console.log("✅ GridottoExecutionFacet deployed:", executionFacetAddress);
 
-    const GridottoAdminFacetSimple = await ethers.getContractFactory("GridottoAdminFacetSimple");
-    const adminFacet = await GridottoAdminFacetSimple.deploy();
+    const GridottoAdminFacet = await ethers.getContractFactory("GridottoAdminFacet");
+    const adminFacet = await GridottoAdminFacet.deploy();
     await adminFacet.waitForDeployment();
     const adminFacetAddress = await adminFacet.getAddress();
-    console.log("✅ GridottoAdminFacetSimple deployed:", adminFacetAddress);
+    console.log("✅ GridottoAdminFacet deployed:", adminFacetAddress);
 
-    const GridottoLeaderboardFacetSimple = await ethers.getContractFactory("GridottoLeaderboardFacetSimple");
-    const leaderboardFacet = await GridottoLeaderboardFacetSimple.deploy();
+    const GridottoLeaderboardFacet = await ethers.getContractFactory("GridottoLeaderboardFacet");
+    const leaderboardFacet = await GridottoLeaderboardFacet.deploy();
     await leaderboardFacet.waitForDeployment();
     const leaderboardFacetAddress = await leaderboardFacet.getAddress();
-    console.log("✅ GridottoLeaderboardFacetSimple deployed:", leaderboardFacetAddress);
+    console.log("✅ GridottoLeaderboardFacet deployed:", leaderboardFacetAddress);
 
     // Get function selectors
     console.log("\n🔍 Getting function selectors...");

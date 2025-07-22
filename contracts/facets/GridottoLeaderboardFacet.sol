@@ -1,41 +1,40 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../libs/LibGridottoStorage.sol";
-import "../libs/LibDiamond.sol";
+import "../libs/LibGridottoStorageSimple.sol";
 
 contract GridottoLeaderboardFacet {
-    using LibGridottoStorage for LibGridottoStorage.Layout;
+    using LibGridottoStorageSimple for LibGridottoStorageSimple.Layout;
     
-    // Structs for leaderboard data
-    struct WinnerStats {
+    // ============ Leaderboard Structs ============
+    
+    struct TopWinner {
         address player;
+        uint256 totalWins;
         uint256 totalWinnings;
-        uint256 drawsWon;
         uint256 lastWinTime;
     }
     
-    struct TicketBuyerStats {
+    struct TopTicketBuyer {
         address player;
         uint256 totalTickets;
         uint256 totalSpent;
         uint256 lastPurchaseTime;
     }
     
-    struct DrawCreatorStats {
+    struct TopDrawCreator {
         address creator;
         uint256 drawsCreated;
         uint256 totalRevenue;
         uint256 successfulDraws;
-        uint256 successRate; // percentage
+        uint256 successRate;
     }
     
-    struct ExecutorStats {
+    struct TopExecutor {
         address executor;
-        uint256 executionsCount;
+        uint256 executionCount;
         uint256 totalFeesEarned;
-        uint256 totalExecutionTime;
-        uint256 avgExecutionTime;
+        uint256 averageExecutionTime;
     }
     
     struct PlatformStats {
@@ -45,187 +44,150 @@ contract GridottoLeaderboardFacet {
         uint256 totalExecutions;
     }
     
-    // Get top winners
-    function getTopWinners(uint256 limit) external view returns (WinnerStats[] memory) {
-        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+    // ============ View Functions ============
+    
+    function getTopWinners(uint256 limit) external view returns (TopWinner[] memory) {
+        LibGridottoStorageSimple.Layout storage s = LibGridottoStorageSimple.layout();
         
-        // Create array to store all players with wins
-        address[] memory players = new address[](1000); // Max 1000 players
-        uint256 playerCount = 0;
+        // Collect all winners
+        address[] memory winners = new address[](100);
+        uint256 winnerCount = 0;
         
-        // Iterate through all draws to find winners
-        for (uint256 i = 1; i < l.nextDrawId && playerCount < 1000; i++) {
-            LibGridottoStorage.UserDraw storage draw = l.userDraws[i];
-            if (draw.isCompleted && draw.winners.length > 0) {
-                for (uint256 j = 0; j < draw.winners.length; j++) {
-                    address winner = draw.winners[j];
-                    
-                    // Check if player already in list
+        for (uint256 drawId = 1; drawId <= s.nextDrawId && winnerCount < 100; drawId++) {
+            LibGridottoStorageSimple.Draw storage draw = s.draws[drawId];
+            if (draw.isCompleted) {
+                for (uint256 i = 0; i < draw.winners.length; i++) {
+                    address winner = draw.winners[i];
                     bool found = false;
-                    for (uint256 k = 0; k < playerCount; k++) {
-                        if (players[k] == winner) {
+                    for (uint256 j = 0; j < winnerCount; j++) {
+                        if (winners[j] == winner) {
                             found = true;
                             break;
                         }
                     }
-                    
-                    if (!found && playerCount < 1000) {
-                        players[playerCount++] = winner;
+                    if (!found && winnerCount < 100) {
+                        winners[winnerCount++] = winner;
                     }
                 }
             }
         }
         
-        // Calculate stats for each player
-        WinnerStats[] memory stats = new WinnerStats[](playerCount);
+        // Create result array
+        TopWinner[] memory topWinners = new TopWinner[](limit < winnerCount ? limit : winnerCount);
         
-        for (uint256 i = 0; i < playerCount; i++) {
-            address player = players[i];
-            uint256 totalWinnings = 0;
-            uint256 drawsWon = 0;
+        // Fill winner data
+        for (uint256 i = 0; i < winnerCount && i < limit; i++) {
+            address winner = winners[i];
             uint256 lastWinTime = 0;
             
-            // Calculate winnings across all draws
-            for (uint256 j = 1; j < l.nextDrawId; j++) {
-                LibGridottoStorage.UserDraw storage draw = l.userDraws[j];
+            // Find last win time
+            for (uint256 drawId = s.nextDrawId; drawId >= 1; drawId--) {
+                LibGridottoStorageSimple.Draw storage draw = s.draws[drawId];
                 if (draw.isCompleted) {
-                    for (uint256 k = 0; k < draw.winners.length; k++) {
-                        if (draw.winners[k] == player) {
-                            totalWinnings += draw.winnerPrizes[k];
-                            drawsWon++;
-                            if (draw.endTime > lastWinTime) {
-                                lastWinTime = draw.endTime;
-                            }
+                    for (uint256 j = 0; j < draw.winners.length; j++) {
+                        if (draw.winners[j] == winner) {
+                            lastWinTime = draw.executedAt;
+                            break;
                         }
                     }
+                    if (lastWinTime > 0) break;
                 }
             }
             
-            stats[i] = WinnerStats({
-                player: player,
-                totalWinnings: totalWinnings,
-                drawsWon: drawsWon,
+            topWinners[i] = TopWinner({
+                player: winner,
+                totalWins: s.userTotalWins[winner],
+                totalWinnings: s.userTotalWinnings[winner],
                 lastWinTime: lastWinTime
             });
         }
         
         // Sort by total winnings (bubble sort for simplicity)
-        for (uint256 i = 0; i < stats.length; i++) {
-            for (uint256 j = i + 1; j < stats.length; j++) {
-                if (stats[j].totalWinnings > stats[i].totalWinnings) {
-                    WinnerStats memory temp = stats[i];
-                    stats[i] = stats[j];
-                    stats[j] = temp;
+        for (uint256 i = 0; i < topWinners.length; i++) {
+            for (uint256 j = i + 1; j < topWinners.length; j++) {
+                if (topWinners[j].totalWinnings > topWinners[i].totalWinnings) {
+                    TopWinner memory temp = topWinners[i];
+                    topWinners[i] = topWinners[j];
+                    topWinners[j] = temp;
                 }
             }
         }
         
-        // Return top N
-        uint256 resultSize = limit < stats.length ? limit : stats.length;
-        WinnerStats[] memory result = new WinnerStats[](resultSize);
-        for (uint256 i = 0; i < resultSize; i++) {
-            result[i] = stats[i];
-        }
-        
-        return result;
+        return topWinners;
     }
     
-    // Get top ticket buyers
-    function getTopTicketBuyers(uint256 limit) external view returns (TicketBuyerStats[] memory) {
-        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+    function getTopTicketBuyers(uint256 limit) external view returns (TopTicketBuyer[] memory) {
+        LibGridottoStorageSimple.Layout storage s = LibGridottoStorageSimple.layout();
         
-        // Create mapping to track buyers
-        address[] memory buyers = new address[](1000);
+        // Collect all buyers
+        address[] memory buyers = new address[](100);
         uint256 buyerCount = 0;
         
-        // Iterate through all draws to find ticket buyers
-        for (uint256 i = 1; i < l.nextDrawId && buyerCount < 1000; i++) {
-            LibGridottoStorage.UserDraw storage draw = l.userDraws[i];
-            
-            // Get participants for this draw
-            address[] memory participants = draw.participants;
-            
-            for (uint256 j = 0; j < participants.length; j++) {
-                address buyer = participants[j];
-                
-                // Check if buyer already in list
+        for (uint256 drawId = 1; drawId <= s.nextDrawId && buyerCount < 100; drawId++) {
+            LibGridottoStorageSimple.Draw storage draw = s.draws[drawId];
+            for (uint256 i = 0; i < draw.participants.length && buyerCount < 100; i++) {
+                address buyer = draw.participants[i];
                 bool found = false;
-                for (uint256 k = 0; k < buyerCount; k++) {
-                    if (buyers[k] == buyer) {
+                for (uint256 j = 0; j < buyerCount; j++) {
+                    if (buyers[j] == buyer) {
                         found = true;
                         break;
                     }
                 }
-                
-                if (!found && buyerCount < 1000) {
+                if (!found) {
                     buyers[buyerCount++] = buyer;
                 }
             }
         }
         
-        // Calculate stats for each buyer
-        TicketBuyerStats[] memory stats = new TicketBuyerStats[](buyerCount);
+        // Create result array
+        TopTicketBuyer[] memory topBuyers = new TopTicketBuyer[](limit < buyerCount ? limit : buyerCount);
         
-        for (uint256 i = 0; i < buyerCount; i++) {
+        // Fill buyer data
+        for (uint256 i = 0; i < buyerCount && i < limit; i++) {
             address buyer = buyers[i];
-            uint256 totalTickets = 0;
-            uint256 totalSpent = 0;
-            uint256 lastPurchase = 0;
+            uint256 lastPurchaseTime = 0;
             
-            // Calculate tickets and spending across all draws
-            for (uint256 j = 1; j < l.nextDrawId; j++) {
-                LibGridottoStorage.UserDraw storage draw = l.userDraws[j];
-                uint256 tickets = draw.userTickets[buyer];
-                if (tickets > 0) {
-                    totalTickets += tickets;
-                    totalSpent += tickets * draw.ticketPrice;
-                    
-                    if (draw.startTime > lastPurchase) {
-                        lastPurchase = draw.startTime;
-                    }
+            // Find last purchase time
+            for (uint256 drawId = s.nextDrawId; drawId >= 1; drawId--) {
+                LibGridottoStorageSimple.Draw storage draw = s.draws[drawId];
+                if (draw.hasParticipated[buyer]) {
+                    lastPurchaseTime = draw.startTime; // Approximate
+                    break;
                 }
             }
             
-            stats[i] = TicketBuyerStats({
+            topBuyers[i] = TopTicketBuyer({
                 player: buyer,
-                totalTickets: totalTickets,
-                totalSpent: totalSpent,
-                lastPurchaseTime: lastPurchase
+                totalTickets: s.userTotalTickets[buyer],
+                totalSpent: s.userTotalSpent[buyer],
+                lastPurchaseTime: lastPurchaseTime
             });
         }
         
-        // Sort by total tickets (bubble sort)
-        for (uint256 i = 0; i < stats.length; i++) {
-            for (uint256 j = i + 1; j < stats.length; j++) {
-                if (stats[j].totalTickets > stats[i].totalTickets) {
-                    TicketBuyerStats memory temp = stats[i];
-                    stats[i] = stats[j];
-                    stats[j] = temp;
+        // Sort by total spent
+        for (uint256 i = 0; i < topBuyers.length; i++) {
+            for (uint256 j = i + 1; j < topBuyers.length; j++) {
+                if (topBuyers[j].totalSpent > topBuyers[i].totalSpent) {
+                    TopTicketBuyer memory temp = topBuyers[i];
+                    topBuyers[i] = topBuyers[j];
+                    topBuyers[j] = temp;
                 }
             }
         }
         
-        // Return top N
-        uint256 resultSize = limit < stats.length ? limit : stats.length;
-        TicketBuyerStats[] memory result = new TicketBuyerStats[](resultSize);
-        for (uint256 i = 0; i < resultSize; i++) {
-            result[i] = stats[i];
-        }
-        
-        return result;
+        return topBuyers;
     }
     
-    // Get top draw creators
-    function getTopDrawCreators(uint256 limit) external view returns (DrawCreatorStats[] memory) {
-        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+    function getTopDrawCreators(uint256 limit) external view returns (TopDrawCreator[] memory) {
+        LibGridottoStorageSimple.Layout storage s = LibGridottoStorageSimple.layout();
         
-        // Create mapping to track creators
-        address[] memory creators = new address[](1000);
+        // Collect all creators
+        address[] memory creators = new address[](50);
         uint256 creatorCount = 0;
         
-        // Find all unique creators
-        for (uint256 i = 1; i < l.nextDrawId && creatorCount < 1000; i++) {
-            address creator = l.userDraws[i].creator;
+        for (uint256 drawId = 1; drawId <= s.nextDrawId && creatorCount < 50; drawId++) {
+            address creator = s.draws[drawId].creator;
             if (creator != address(0)) {
                 bool found = false;
                 for (uint256 j = 0; j < creatorCount; j++) {
@@ -234,39 +196,35 @@ contract GridottoLeaderboardFacet {
                         break;
                     }
                 }
-                
                 if (!found) {
                     creators[creatorCount++] = creator;
                 }
             }
         }
         
-        // Calculate stats for each creator
-        DrawCreatorStats[] memory stats = new DrawCreatorStats[](creatorCount);
+        // Create result array
+        TopDrawCreator[] memory topCreators = new TopDrawCreator[](limit < creatorCount ? limit : creatorCount);
         
-        for (uint256 i = 0; i < creatorCount; i++) {
+        // Calculate stats for each creator
+        for (uint256 i = 0; i < creatorCount && i < limit; i++) {
             address creator = creators[i];
-            uint256 drawsCreated = 0;
-            uint256 totalRevenue = 0;
             uint256 successfulDraws = 0;
+            uint256 totalRevenue = 0;
             
-            for (uint256 j = 1; j < l.nextDrawId; j++) {
-                LibGridottoStorage.UserDraw storage draw = l.userDraws[j];
+            for (uint256 drawId = 1; drawId <= s.nextDrawId; drawId++) {
+                LibGridottoStorageSimple.Draw storage draw = s.draws[drawId];
                 if (draw.creator == creator) {
-                    drawsCreated++;
-                    
-                    if (draw.isCompleted && !draw.isCancelled) {
+                    if (draw.isCompleted) {
                         successfulDraws++;
-                        // Calculate creator revenue (platform fee portion)
-                        uint256 creatorShare = (draw.ticketsSold * draw.ticketPrice * 10) / 100; // Assuming 10% creator fee
-                        totalRevenue += creatorShare;
+                        totalRevenue += draw.prizePool;
                     }
                 }
             }
             
+            uint256 drawsCreated = s.userDrawsCreated[creator];
             uint256 successRate = drawsCreated > 0 ? (successfulDraws * 100) / drawsCreated : 0;
             
-            stats[i] = DrawCreatorStats({
+            topCreators[i] = TopDrawCreator({
                 creator: creator,
                 drawsCreated: drawsCreated,
                 totalRevenue: totalRevenue,
@@ -275,38 +233,29 @@ contract GridottoLeaderboardFacet {
             });
         }
         
-        // Sort by draws created
-        for (uint256 i = 0; i < stats.length; i++) {
-            for (uint256 j = i + 1; j < stats.length; j++) {
-                if (stats[j].drawsCreated > stats[i].drawsCreated) {
-                    DrawCreatorStats memory temp = stats[i];
-                    stats[i] = stats[j];
-                    stats[j] = temp;
+        // Sort by total revenue
+        for (uint256 i = 0; i < topCreators.length; i++) {
+            for (uint256 j = i + 1; j < topCreators.length; j++) {
+                if (topCreators[j].totalRevenue > topCreators[i].totalRevenue) {
+                    TopDrawCreator memory temp = topCreators[i];
+                    topCreators[i] = topCreators[j];
+                    topCreators[j] = temp;
                 }
             }
         }
         
-        // Return top N
-        uint256 resultSize = limit < stats.length ? limit : stats.length;
-        DrawCreatorStats[] memory result = new DrawCreatorStats[](resultSize);
-        for (uint256 i = 0; i < resultSize; i++) {
-            result[i] = stats[i];
-        }
-        
-        return result;
+        return topCreators;
     }
     
-    // Get top executors
-    function getTopExecutors(uint256 limit) external view returns (ExecutorStats[] memory) {
-        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
+    function getTopExecutors(uint256 limit) external view returns (TopExecutor[] memory) {
+        LibGridottoStorageSimple.Layout storage s = LibGridottoStorageSimple.layout();
         
-        // Track executors
-        address[] memory executors = new address[](1000);
+        // Collect all executors
+        address[] memory executors = new address[](50);
         uint256 executorCount = 0;
         
-        // Find all executors
-        for (uint256 i = 1; i < l.nextDrawId && executorCount < 1000; i++) {
-            LibGridottoStorage.UserDraw storage draw = l.userDraws[i];
+        for (uint256 drawId = 1; drawId <= s.nextDrawId && executorCount < 50; drawId++) {
+            LibGridottoStorageSimple.Draw storage draw = s.draws[drawId];
             if (draw.isCompleted && draw.executor != address(0)) {
                 bool found = false;
                 for (uint256 j = 0; j < executorCount; j++) {
@@ -315,100 +264,49 @@ contract GridottoLeaderboardFacet {
                         break;
                     }
                 }
-                
                 if (!found) {
                     executors[executorCount++] = draw.executor;
                 }
             }
         }
         
-        // Calculate stats
-        ExecutorStats[] memory stats = new ExecutorStats[](executorCount);
+        // Create result array
+        TopExecutor[] memory topExecutors = new TopExecutor[](limit < executorCount ? limit : executorCount);
         
-        for (uint256 i = 0; i < executorCount; i++) {
+        // Fill executor data
+        for (uint256 i = 0; i < executorCount && i < limit; i++) {
             address executor = executors[i];
-            uint256 executionsCount = 0;
-            uint256 totalFeesEarned = 0;
-            uint256 totalExecutionTime = 0;
             
-            for (uint256 j = 1; j < l.nextDrawId; j++) {
-                LibGridottoStorage.UserDraw storage draw = l.userDraws[j];
-                if (draw.executor == executor) {
-                    executionsCount++;
-                    // Executor gets 5% of ticket sales
-                    uint256 executorFee = (draw.ticketsSold * draw.ticketPrice * 5) / 100;
-                    totalFeesEarned += executorFee;
-                    
-                    // Calculate execution time (time between end and execution)
-                    if (draw.executedAt > draw.endTime) {
-                        totalExecutionTime += (draw.executedAt - draw.endTime);
-                    }
-                }
-            }
-            
-            uint256 avgExecutionTime = executionsCount > 0 ? totalExecutionTime / executionsCount : 0;
-            
-            stats[i] = ExecutorStats({
+            topExecutors[i] = TopExecutor({
                 executor: executor,
-                executionsCount: executionsCount,
-                totalFeesEarned: totalFeesEarned,
-                totalExecutionTime: totalExecutionTime,
-                avgExecutionTime: avgExecutionTime
+                executionCount: s.userDrawsExecuted[executor],
+                totalFeesEarned: s.userExecutionFees[executor],
+                averageExecutionTime: 0 // Not tracked in simplified version
             });
         }
         
-        // Sort by executions count
-        for (uint256 i = 0; i < stats.length; i++) {
-            for (uint256 j = i + 1; j < stats.length; j++) {
-                if (stats[j].executionsCount > stats[i].executionsCount) {
-                    ExecutorStats memory temp = stats[i];
-                    stats[i] = stats[j];
-                    stats[j] = temp;
+        // Sort by fees earned
+        for (uint256 i = 0; i < topExecutors.length; i++) {
+            for (uint256 j = i + 1; j < topExecutors.length; j++) {
+                if (topExecutors[j].totalFeesEarned > topExecutors[i].totalFeesEarned) {
+                    TopExecutor memory temp = topExecutors[i];
+                    topExecutors[i] = topExecutors[j];
+                    topExecutors[j] = temp;
                 }
             }
         }
         
-        // Return top N
-        uint256 resultSize = limit < stats.length ? limit : stats.length;
-        ExecutorStats[] memory result = new ExecutorStats[](resultSize);
-        for (uint256 i = 0; i < resultSize; i++) {
-            result[i] = stats[i];
-        }
-        
-        return result;
+        return topExecutors;
     }
     
-    // Get platform statistics
     function getPlatformStats() external view returns (PlatformStats memory) {
-        LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
-        
-        uint256 totalPrizes = 0;
-        uint256 totalTickets = 0;
-        uint256 totalDraws = l.nextDrawId - 1;
-        uint256 totalExecutions = 0;
-        
-        for (uint256 i = 1; i < l.nextDrawId; i++) {
-            LibGridottoStorage.UserDraw storage draw = l.userDraws[i];
-            
-            if (draw.creator != address(0)) {
-                totalTickets += draw.ticketsSold;
-                
-                if (draw.isCompleted && !draw.isCancelled) {
-                    totalExecutions++;
-                    
-                    // Sum all winner prizes
-                    for (uint256 j = 0; j < draw.winnerPrizes.length; j++) {
-                        totalPrizes += draw.winnerPrizes[j];
-                    }
-                }
-            }
-        }
+        LibGridottoStorageSimple.Layout storage s = LibGridottoStorageSimple.layout();
         
         return PlatformStats({
-            totalPrizesDistributed: totalPrizes,
-            totalTicketsSold: totalTickets,
-            totalDrawsCreated: totalDraws,
-            totalExecutions: totalExecutions
+            totalPrizesDistributed: s.totalPrizesDistributed,
+            totalTicketsSold: s.totalTicketsSold,
+            totalDrawsCreated: s.totalDrawsCreated,
+            totalExecutions: s.totalExecutions
         });
     }
 }

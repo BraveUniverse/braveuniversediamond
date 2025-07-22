@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "../libs/LibGridottoStorageSimple.sol";
 import "../libs/LibDiamond.sol";
 
-contract GridottoAdminFacetSimple {
+contract GridottoAdminFacet {
     using LibGridottoStorageSimple for LibGridottoStorageSimple.Layout;
     
     // Events
