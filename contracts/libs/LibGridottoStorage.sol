@@ -113,7 +113,13 @@ library LibGridottoStorage {
         uint256 startTime;
         uint256 endTime;
         bool isCompleted;
+        bool isCancelled;
         address[] winners;
+        uint256[] winnerPrizes;
+        
+        // Execution tracking
+        address executor;
+        uint256 executedAt;
         
         // Fees
         uint256 platformFeeCollected;
