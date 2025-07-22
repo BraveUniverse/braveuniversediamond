@@ -1,18 +1,1 @@
-[
-  "event BackupRandomnessToggled(bool enabled)",
-  "event OracleAddressChanged(address oldAddress, address newAddress)",
-  "event OracleMethodIDChanged(bytes32 oldMethodID, bytes32 newMethodID)",
-  "event OracleValueUpdated(uint256 value, uint256 timestamp)",
-  "function forceUpdateOracle() returns (uint256)",
-  "function getGameRandomNumber(bytes32 gameId, uint256 roundNumber, address player) returns (uint256)",
-  "function getOracleAge() view returns (uint256)",
-  "function getOracleData() view returns (address oracleAddress, bytes32 methodId, bool useBackupRandomness, uint256 lastValue, uint256 lastTimestamp)",
-  "function getRandomInRange(uint256 min, uint256 max) returns (uint256)",
-  "function getRandomNumber() returns (uint256)",
-  "function getRandomNumberWithSeed(bytes32 seed) returns (uint256)",
-  "function initializeOracle()",
-  "function setOracleAddress(address newOracleAddress)",
-  "function setOracleMethodID(bytes32 newMethodId)",
-  "function setUseBackupRandomness(bool enabled)",
-  "function testOracleConnection() pure returns (bool success, uint256 value)"
-]
+[{"type":"event","anonymous":false,"name":"BackupRandomnessToggled","inputs":[{"type":"bool","name":"enabled","indexed":false}]},{"type":"event","anonymous":false,"name":"OracleAddressChanged","inputs":[{"type":"address","name":"oldAddress","indexed":false},{"type":"address","name":"newAddress","indexed":false}]},{"type":"event","anonymous":false,"name":"OracleMethodIDChanged","inputs":[{"type":"bytes32","name":"oldMethodID","indexed":false},{"type":"bytes32","name":"newMethodID","indexed":false}]},{"type":"event","anonymous":false,"name":"OracleValueUpdated","inputs":[{"type":"uint256","name":"value","indexed":false},{"type":"uint256","name":"timestamp","indexed":false}]},{"type":"function","name":"forceUpdateOracle","constant":false,"payable":false,"inputs":[],"outputs":[{"type":"uint256","name":""}]},{"type":"function","name":"getGameRandomNumber","constant":false,"payable":false,"inputs":[{"type":"bytes32","name":"gameId"},{"type":"uint256","name":"roundNumber"},{"type":"address","name":"player"}],"outputs":[{"type":"uint256","name":""}]},{"type":"function","name":"getOracleAge","constant":true,"stateMutability":"view","payable":false,"inputs":[],"outputs":[{"type":"uint256","name":""}]},{"type":"function","name":"getOracleData","constant":true,"stateMutability":"view","payable":false,"inputs":[],"outputs":[{"type":"address","name":"oracleAddress"},{"type":"bytes32","name":"methodId"},{"type":"bool","name":"useBackupRandomness"},{"type":"uint256","name":"lastValue"},{"type":"uint256","name":"lastTimestamp"}]},{"type":"function","name":"getRandomInRange","constant":false,"payable":false,"inputs":[{"type":"uint256","name":"min"},{"type":"uint256","name":"max"}],"outputs":[{"type":"uint256","name":""}]},{"type":"function","name":"getRandomNumber","constant":false,"payable":false,"inputs":[],"outputs":[{"type":"uint256","name":""}]},{"type":"function","name":"getRandomNumberWithSeed","constant":false,"payable":false,"inputs":[{"type":"bytes32","name":"seed"}],"outputs":[{"type":"uint256","name":""}]},{"type":"function","name":"initializeOracle","constant":false,"payable":false,"inputs":[],"outputs":[]},{"type":"function","name":"setOracleAddress","constant":false,"payable":false,"inputs":[{"type":"address","name":"newOracleAddress"}],"outputs":[]},{"type":"function","name":"setOracleMethodID","constant":false,"payable":false,"inputs":[{"type":"bytes32","name":"newMethodId"}],"outputs":[]},{"type":"function","name":"setUseBackupRandomness","constant":false,"payable":false,"inputs":[{"type":"bool","name":"enabled"}],"outputs":[]},{"type":"function","name":"testOracleConnection","constant":true,"stateMutability":"pure","payable":false,"inputs":[],"outputs":[{"type":"bool","name":"success"},{"type":"uint256","name":"value"}]}]

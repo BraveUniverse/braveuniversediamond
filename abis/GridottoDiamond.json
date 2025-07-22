@@ -1,0 +1,1740 @@
+[
+  {
+    "type": "error",
+    "name": "InitializationFunctionReverted",
+    "inputs": [
+      {
+        "type": "address",
+        "name": "_initializationContractAddress"
+      },
+      {
+        "type": "bytes",
+        "name": "_calldata"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "DiamondCut",
+    "inputs": [
+      {
+        "type": "tuple[]",
+        "name": "_diamondCut",
+        "components": [
+          {
+            "type": "address",
+            "name": "facetAddress"
+          },
+          {
+            "type": "uint8",
+            "name": "action"
+          },
+          {
+            "type": "bytes4[]",
+            "name": "functionSelectors"
+          }
+        ]
+      },
+      {
+        "type": "address",
+        "name": "_init",
+        "indexed": false
+      },
+      {
+        "type": "bytes",
+        "name": "_calldata",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "diamondCut",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "type": "tuple[]",
+        "name": "_diamondCut",
+        "components": [
+          {
+            "type": "address",
+            "name": "facetAddress"
+          },
+          {
+            "type": "uint8",
+            "name": "action"
+          },
+          {
+            "type": "bytes4[]",
+            "name": "functionSelectors"
+          }
+        ]
+      },
+      {
+        "type": "address",
+        "name": "_init"
+      },
+      {
+        "type": "bytes",
+        "name": "_calldata"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "facetAddress",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "bytes4",
+        "name": "_functionSelector"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "address",
+        "name": "facetAddress_"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "facetAddresses",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "address[]",
+        "name": "facetAddresses_"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "facetFunctionSelectors",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "address",
+        "name": "_facet"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "bytes4[]",
+        "name": "facetFunctionSelectors_"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "facets",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "tuple[]",
+        "name": "facets_",
+        "components": [
+          {
+            "type": "address",
+            "name": "facetAddress"
+          },
+          {
+            "type": "bytes4[]",
+            "name": "functionSelectors"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "supportsInterface",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "bytes4",
+        "name": "_interfaceId"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "bool",
+        "name": ""
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "OwnershipTransferred",
+    "inputs": [
+      {
+        "type": "address",
+        "name": "previousOwner",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "newOwner",
+        "indexed": true
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "owner",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "address",
+        "name": "owner_"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "transferOwnership",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "type": "address",
+        "name": "_newOwner"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "DrawCancelled",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId",
+        "indexed": true
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "DrawCreated",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "creator",
+        "indexed": true
+      },
+      {
+        "type": "uint8",
+        "name": "drawType",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "MonthlyTicketsAwarded",
+    "inputs": [
+      {
+        "type": "address",
+        "name": "user",
+        "indexed": true
+      },
+      {
+        "type": "uint256",
+        "name": "amount",
+        "indexed": false
+      },
+      {
+        "type": "string",
+        "name": "reason",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "TicketsPurchased",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "buyer",
+        "indexed": true
+      },
+      {
+        "type": "uint256",
+        "name": "amount",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "buyTickets",
+    "constant": false,
+    "stateMutability": "payable",
+    "payable": true,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      },
+      {
+        "type": "uint256",
+        "name": "amount"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "cancelDraw",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "createLYXDraw",
+    "constant": false,
+    "stateMutability": "payable",
+    "payable": true,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "ticketPrice"
+      },
+      {
+        "type": "uint256",
+        "name": "maxTickets"
+      },
+      {
+        "type": "uint256",
+        "name": "duration"
+      },
+      {
+        "type": "uint256",
+        "name": "minParticipants"
+      },
+      {
+        "type": "uint256",
+        "name": "platformFeePercent"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "createNFTDraw",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "type": "address",
+        "name": "nftContract"
+      },
+      {
+        "type": "bytes32[]",
+        "name": "nftTokenIds"
+      },
+      {
+        "type": "uint256",
+        "name": "ticketPrice"
+      },
+      {
+        "type": "uint256",
+        "name": "maxTickets"
+      },
+      {
+        "type": "uint256",
+        "name": "duration"
+      },
+      {
+        "type": "uint256",
+        "name": "minParticipants"
+      },
+      {
+        "type": "uint256",
+        "name": "platformFeePercent"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "createTokenDraw",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "type": "address",
+        "name": "tokenAddress"
+      },
+      {
+        "type": "uint256",
+        "name": "ticketPrice"
+      },
+      {
+        "type": "uint256",
+        "name": "maxTickets"
+      },
+      {
+        "type": "uint256",
+        "name": "duration"
+      },
+      {
+        "type": "uint256",
+        "name": "minParticipants"
+      },
+      {
+        "type": "uint256",
+        "name": "platformFeePercent"
+      },
+      {
+        "type": "uint256",
+        "name": "initialPrize"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getDrawDetails",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "address",
+        "name": "creator"
+      },
+      {
+        "type": "uint8",
+        "name": "drawType"
+      },
+      {
+        "type": "address",
+        "name": "tokenAddress"
+      },
+      {
+        "type": "uint256",
+        "name": "ticketPrice"
+      },
+      {
+        "type": "uint256",
+        "name": "maxTickets"
+      },
+      {
+        "type": "uint256",
+        "name": "ticketsSold"
+      },
+      {
+        "type": "uint256",
+        "name": "prizePool"
+      },
+      {
+        "type": "uint256",
+        "name": "startTime"
+      },
+      {
+        "type": "uint256",
+        "name": "endTime"
+      },
+      {
+        "type": "uint256",
+        "name": "minParticipants"
+      },
+      {
+        "type": "uint256",
+        "name": "platformFeePercent"
+      },
+      {
+        "type": "bool",
+        "name": "isCompleted"
+      },
+      {
+        "type": "bool",
+        "name": "isCancelled"
+      },
+      {
+        "type": "uint256",
+        "name": "participantCount"
+      },
+      {
+        "type": "uint256",
+        "name": "monthlyPoolContribution"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getUserDrawHistory",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "address",
+        "name": "user"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "uint256[]",
+        "name": ""
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "DrawExecuted",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "executor",
+        "indexed": true
+      },
+      {
+        "type": "address[]",
+        "name": "winners"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "canExecuteDraw",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "bool",
+        "name": ""
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "executeDraw",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "getDrawWinners",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "address[]",
+        "name": "winners"
+      },
+      {
+        "type": "uint256[]",
+        "name": "amounts"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "MonthlyDrawCreated",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId",
+        "indexed": true
+      },
+      {
+        "type": "uint256",
+        "name": "endTime",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "MonthlyTicketsAwarded",
+    "inputs": [
+      {
+        "type": "address",
+        "name": "user",
+        "indexed": true
+      },
+      {
+        "type": "uint256",
+        "name": "tickets",
+        "indexed": false
+      },
+      {
+        "type": "string",
+        "name": "reason",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "WeeklyDrawCreated",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId",
+        "indexed": true
+      },
+      {
+        "type": "uint256",
+        "name": "endTime",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "executeMonthlyDraw",
+    "constant": false,
+    "payable": false,
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "executeWeeklyDraw",
+    "constant": false,
+    "payable": false,
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "getPlatformDrawsInfo",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": "weeklyDrawId"
+      },
+      {
+        "type": "uint256",
+        "name": "monthlyDrawId"
+      },
+      {
+        "type": "uint256",
+        "name": "weeklyEndTime"
+      },
+      {
+        "type": "uint256",
+        "name": "monthlyEndTime"
+      },
+      {
+        "type": "uint256",
+        "name": "monthlyPoolBalance"
+      },
+      {
+        "type": "uint256",
+        "name": "weeklyCount"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getUserMonthlyTickets",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "address",
+        "name": "user"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": "fromWeekly"
+      },
+      {
+        "type": "uint256",
+        "name": "fromCreating"
+      },
+      {
+        "type": "uint256",
+        "name": "fromParticipating"
+      },
+      {
+        "type": "uint256",
+        "name": "total"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "initializePlatformDraws",
+    "constant": false,
+    "payable": false,
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "PrizeClaimed",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "winner",
+        "indexed": true
+      },
+      {
+        "type": "uint256",
+        "name": "amount",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "RefundClaimed",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "user",
+        "indexed": true
+      },
+      {
+        "type": "uint256",
+        "name": "amount",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "canClaimPrize",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      },
+      {
+        "type": "address",
+        "name": "user"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "bool",
+        "name": "canClaim"
+      },
+      {
+        "type": "uint256",
+        "name": "amount"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "claimPrize",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "claimRefund",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "getRefundAmount",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      },
+      {
+        "type": "address",
+        "name": "user"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": ""
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "EmergencyWithdraw",
+    "inputs": [
+      {
+        "type": "address",
+        "name": "token",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "amount",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "FeePercentagesUpdated",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "platform",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "executor",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "monthly",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "weeklyMonthly",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "PlatformFeesWithdrawn",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "amount",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "SystemPaused",
+    "inputs": [
+      {
+        "type": "bool",
+        "name": "paused",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "TokenFeesWithdrawn",
+    "inputs": [
+      {
+        "type": "address",
+        "name": "token",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "amount",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "emergencyWithdraw",
+    "constant": false,
+    "payable": false,
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "forceExecuteDraw",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "getPlatformFeesLYX",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": ""
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getPlatformFeesToken",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "address",
+        "name": "token"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": ""
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getSystemStats",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": "totalDrawsCreated"
+      },
+      {
+        "type": "uint256",
+        "name": "totalTicketsSold"
+      },
+      {
+        "type": "uint256",
+        "name": "totalPrizesDistributed"
+      },
+      {
+        "type": "uint256",
+        "name": "totalExecutions"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "isPaused",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "bool",
+        "name": ""
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "pauseSystem",
+    "constant": false,
+    "payable": false,
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "setFeePercentages",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "defaultPlatformFee"
+      },
+      {
+        "type": "uint256",
+        "name": "executorFeePercent"
+      },
+      {
+        "type": "uint256",
+        "name": "monthlyPoolPercent"
+      },
+      {
+        "type": "uint256",
+        "name": "weeklyMonthlyPercent"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "unpauseSystem",
+    "constant": false,
+    "payable": false,
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "withdrawPlatformFees",
+    "constant": false,
+    "payable": false,
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "withdrawTokenFees",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "type": "address",
+        "name": "token"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "getPlatformStats",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "tuple",
+        "name": "",
+        "components": [
+          {
+            "type": "uint256",
+            "name": "totalPrizesDistributed"
+          },
+          {
+            "type": "uint256",
+            "name": "totalTicketsSold"
+          },
+          {
+            "type": "uint256",
+            "name": "totalDrawsCreated"
+          },
+          {
+            "type": "uint256",
+            "name": "totalExecutions"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getTopDrawCreators",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "limit"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "tuple[]",
+        "name": "",
+        "components": [
+          {
+            "type": "address",
+            "name": "creator"
+          },
+          {
+            "type": "uint256",
+            "name": "drawsCreated"
+          },
+          {
+            "type": "uint256",
+            "name": "totalRevenue"
+          },
+          {
+            "type": "uint256",
+            "name": "successfulDraws"
+          },
+          {
+            "type": "uint256",
+            "name": "successRate"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getTopExecutors",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "limit"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "tuple[]",
+        "name": "",
+        "components": [
+          {
+            "type": "address",
+            "name": "executor"
+          },
+          {
+            "type": "uint256",
+            "name": "executionCount"
+          },
+          {
+            "type": "uint256",
+            "name": "totalFeesEarned"
+          },
+          {
+            "type": "uint256",
+            "name": "averageExecutionTime"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getTopTicketBuyers",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "limit"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "tuple[]",
+        "name": "",
+        "components": [
+          {
+            "type": "address",
+            "name": "player"
+          },
+          {
+            "type": "uint256",
+            "name": "totalTickets"
+          },
+          {
+            "type": "uint256",
+            "name": "totalSpent"
+          },
+          {
+            "type": "uint256",
+            "name": "lastPurchaseTime"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getTopWinners",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "limit"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "tuple[]",
+        "name": "",
+        "components": [
+          {
+            "type": "address",
+            "name": "player"
+          },
+          {
+            "type": "uint256",
+            "name": "totalWins"
+          },
+          {
+            "type": "uint256",
+            "name": "totalWinnings"
+          },
+          {
+            "type": "uint256",
+            "name": "lastWinTime"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "calculateTotalTickets",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": "total"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getDrawDebugInfo",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "address",
+        "name": "creator"
+      },
+      {
+        "type": "uint8",
+        "name": "drawType"
+      },
+      {
+        "type": "uint256",
+        "name": "configTicketPrice"
+      },
+      {
+        "type": "uint256",
+        "name": "configMaxTickets"
+      },
+      {
+        "type": "uint256",
+        "name": "configDuration"
+      },
+      {
+        "type": "uint256",
+        "name": "configMinParticipants"
+      },
+      {
+        "type": "uint256",
+        "name": "configPlatformFeePercent"
+      },
+      {
+        "type": "address",
+        "name": "tokenAddress"
+      },
+      {
+        "type": "uint256",
+        "name": "ticketsSold"
+      },
+      {
+        "type": "uint256",
+        "name": "prizePool"
+      },
+      {
+        "type": "uint256",
+        "name": "creatorContribution"
+      },
+      {
+        "type": "uint256",
+        "name": "startTime"
+      },
+      {
+        "type": "uint256",
+        "name": "endTime"
+      },
+      {
+        "type": "bool",
+        "name": "isCompleted"
+      },
+      {
+        "type": "bool",
+        "name": "isCancelled"
+      },
+      {
+        "type": "uint256",
+        "name": "participantCount"
+      },
+      {
+        "type": "uint256",
+        "name": "monthlyPoolContribution"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getDrawParticipants",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "address[]",
+        "name": ""
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getTicketsSoldDirectly",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": ""
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getUserTicketCount",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "drawId"
+      },
+      {
+        "type": "address",
+        "name": "user"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": ""
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "BackupRandomnessToggled",
+    "inputs": [
+      {
+        "type": "bool",
+        "name": "enabled",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "OracleAddressChanged",
+    "inputs": [
+      {
+        "type": "address",
+        "name": "oldAddress",
+        "indexed": false
+      },
+      {
+        "type": "address",
+        "name": "newAddress",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "OracleMethodIDChanged",
+    "inputs": [
+      {
+        "type": "bytes32",
+        "name": "oldMethodID",
+        "indexed": false
+      },
+      {
+        "type": "bytes32",
+        "name": "newMethodID",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "OracleValueUpdated",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "value",
+        "indexed": false
+      },
+      {
+        "type": "uint256",
+        "name": "timestamp",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "forceUpdateOracle",
+    "constant": false,
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": ""
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getGameRandomNumber",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "type": "bytes32",
+        "name": "gameId"
+      },
+      {
+        "type": "uint256",
+        "name": "roundNumber"
+      },
+      {
+        "type": "address",
+        "name": "player"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": ""
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getOracleAge",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": ""
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getOracleData",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "address",
+        "name": "oracleAddress"
+      },
+      {
+        "type": "bytes32",
+        "name": "methodId"
+      },
+      {
+        "type": "bool",
+        "name": "useBackupRandomness"
+      },
+      {
+        "type": "uint256",
+        "name": "lastValue"
+      },
+      {
+        "type": "uint256",
+        "name": "lastTimestamp"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getRandomInRange",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "min"
+      },
+      {
+        "type": "uint256",
+        "name": "max"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": ""
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getRandomNumber",
+    "constant": false,
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": ""
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getRandomNumberWithSeed",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "type": "bytes32",
+        "name": "seed"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": ""
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "initializeOracle",
+    "constant": false,
+    "payable": false,
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "setOracleAddress",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "type": "address",
+        "name": "newOracleAddress"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "setOracleMethodID",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "type": "bytes32",
+        "name": "newMethodId"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "setUseBackupRandomness",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "type": "bool",
+        "name": "enabled"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "testOracleConnection",
+    "constant": true,
+    "stateMutability": "pure",
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "bool",
+        "name": "success"
+      },
+      {
+        "type": "uint256",
+        "name": "value"
+      }
+    ]
+  }
+]
