@@ -110,7 +110,6 @@ async function main() {
         // Check platform info
         console.log("\n💰 Platform Info:");
         console.log("- Monthly pool:", ethers.formatEther(platformInfo.monthlyPoolBalance), "LYX");
-        console.log("- Weekly count:", platformInfo.weeklyDrawCount.toString());
         
     } catch (error: any) {
         console.error("❌ Test 2 failed:", error.message);
@@ -141,7 +140,7 @@ async function main() {
         if (winners.length > 0) {
             console.log("\nTop Winners:");
             for (let i = 0; i < winners.length; i++) {
-                console.log(`${i+1}. ${winners[i].user.slice(0,6)}...${winners[i].user.slice(-4)} - ${winners[i].wins} wins, ${ethers.formatEther(winners[i].totalWinnings)} LYX`);
+                console.log(`${i+1}. ${winners[i].player.slice(0,6)}...${winners[i].player.slice(-4)} - ${winners[i].totalWins} wins, ${ethers.formatEther(winners[i].totalWinnings)} LYX`);
             }
         }
         
@@ -149,7 +148,7 @@ async function main() {
         if (buyers.length > 0) {
             console.log("\nTop Ticket Buyers:");
             for (let i = 0; i < buyers.length; i++) {
-                console.log(`${i+1}. ${buyers[i].user.slice(0,6)}...${buyers[i].user.slice(-4)} - ${buyers[i].totalTickets} tickets`);
+                console.log(`${i+1}. ${buyers[i].player.slice(0,6)}...${buyers[i].player.slice(-4)} - ${buyers[i].totalTickets} tickets`);
             }
         }
         
