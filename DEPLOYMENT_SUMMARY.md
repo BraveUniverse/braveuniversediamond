@@ -1,88 +1,67 @@
-# BraveUniverse Diamond Deployment Summary
+# Gridotto System Deployment Summary
 
-## 🚀 Deployment Completed Successfully!
+## Deployment Date: July 22, 2025
 
-### Deployed Contracts (LUKSO Testnet)
-- **BraveUniverse Diamond**: `0xda142c5978D707E83618390F4f8796bD7eb3a790`
-- **DiamondCutFacet**: `0x7C1BedB4DB36c95f810361aC291E50e1719AE4BF`
-- **DiamondLoupeFacet**: `0x8C272e3e0a3B0dB07c152F38981c3a04021a6377`
-- **OwnershipFacet**: `0xc6Ca514Ab32458bf35c04f908463345149a3c6A8`
+### Network: LUKSO Testnet
 
-### ✅ BraveUniverse Rules Compliance
+## Contract Addresses
 
-All requirements from `.cursor/rules` have been fulfilled:
+- **Diamond Proxy**: `0x5Ad808FAE645BA3682170467114e5b80A70bF276`
 
-#### Global Goals Met
-- ✅ Only LUKSO Testnet used (no production deployment)
-- ✅ Facet lifecycle followed: draft → test → pass → ready → deploy
-- ✅ All artifacts and metadata properly exported
+### Current Active Facets (After Restructuring)
 
-#### Quality Requirements
-- ✅ 100% test coverage achieved
-- ✅ Multi-user simulation completed
-- ✅ Access control explicitly tested
-- ✅ Gas usage optimized and benchmarked
+1. **GridottoCoreFacet**: `0x8400Ec09EdB6D454A00274176eB3AFc15CCB0aFE`
+   - 9 functions
+   - Handles: Draw creation, ticket purchase, view functions
 
-#### Required Outputs Created
-- ✅ **ABIs**: Exported to `/abis/` directory
-  - BraveUniverseDiamond.json
-  - DiamondCutFacet.json
-  - DiamondLoupeFacet.json
-  - OwnershipFacet.json
+2. **GridottoExecutionFacetSimple**: `0x71b49A77325C483d404dE22edaD29E6e164BDB36`
+   - 4 functions
+   - Handles: Draw execution, prize claiming
 
-- ✅ **Deployment Addresses**: `/deployments/staging/addresses.json`
+3. **GridottoAdminFacetSimple**: `0x6a029f8654334130bA500f05ccc939576D83516f`
+   - 13 functions
+   - Handles: System administration, fee management
 
-- ✅ **Facet Status**: JSON files in `/status/` directory
-  - All facets marked as `BUILD_READY`
-  - Test coverage: 100%
-  - Multi-user tested: true
+4. **GridottoLeaderboardFacetSimple**: `0xb4DDeC2d27CeEb93883139257Cc367e77D8f5Ca7`
+   - 5 functions
+   - Handles: Statistics and leaderboards
 
-- ✅ **Checklists**: Complete in `/checklist/` directory
-  - All items checked and completed
-  - Deployment addresses included
+### Diamond Standard Facets (Unchanged)
 
-- ✅ **Documentation**: English + Turkish in `/docs/facets/`
-  - English documentation in `/docs/facets/en/`
-  - Turkish documentation in `/docs/facets/tr/`
+- **DiamondCutFacet**: `0x528B2aD05dB526a2245c6621cB7D320E127d3be8`
+- **DiamondLoupeFacet**: `0xC5B9bb6d38B0f9E908BCa96E2154fF1C5ceca9D1`
+- **OwnershipFacet**: `0x6D2E0C2205A0660A6C5F0a0fAAA61D8107cC8260`
 
-- ✅ **FacetMap**: Updated `/facetmap/BraveUniverse-map.json`
-  - Core facets categorized
-  - Ownership facets listed
+## What Was Fixed
 
-### 🔧 Technical Details
-- **Network**: LUKSO Testnet (Chain ID: 4201)
-- **Solidity Version**: 0.8.28
-- **Optimization**: Enabled (200 runs)
-- **Gas Used**: Optimized deployment
-- **Test Results**: All 16 tests passing
+1. **Storage Mapping Issue**: Completely resolved by implementing a new simplified storage structure (`LibGridottoStorageSimple`)
+2. **Facet Consolidation**: Reduced from 22 facets to 7 (including Diamond standard facets)
+3. **Function Duplication**: Eliminated all duplicate functions
+4. **Timestamp Issues**: Fixed by using proper storage layout
 
-### 📋 Project Structure Compliance
-```
-├── abis/                    # ✅ ABI files exported
-├── checklist/              # ✅ Completion checklists
-├── deployments/staging/    # ✅ Deployment addresses
-├── docs/facets/           # ✅ Documentation (EN/TR)
-├── facetmap/              # ✅ Facet organization
-├── status/                # ✅ Facet status tracking
-├── contracts/             # ✅ Smart contracts
-├── scripts/               # ✅ Deployment scripts
-└── test/                  # ✅ Complete test suite
-```
+## Test Results
 
-### 🌐 Next Steps
-1. Contracts are deployed and ready for integration
-2. All documentation is complete and accessible
-3. FacetMap allows for easy facet discovery
-4. Status tracking enables monitoring of facet lifecycle
-5. Ready for additional facet development and deployment
+Successfully tested:
+- ✅ Draw creation (LYX)
+- ✅ Ticket purchase
+- ✅ Draw execution
+- ✅ Prize claiming
+- ✅ Leaderboard queries
+- ✅ Admin functions
 
-### 📝 Git Repository
-- All changes committed and pushed to GitHub
-- Branch: `cursor/diamond-da-t-m-ve-dosya-g-ncellemeleri-d44b`
-- Pull request available for review and merge
+## Important Scripts
 
----
-**Deployment Date**: July 18, 2025  
-**Network**: LUKSO Testnet  
-**Status**: ✅ BUILD_READY  
-**Compliance**: ✅ All BraveUniverse rules satisfied
+- **Deploy**: `npx hardhat run scripts/deploy-simplified-system-v2.ts --network luksoTestnet`
+- **Test**: `npx hardhat run scripts/test-simple-draw.ts --network luksoTestnet`
+- **Check Status**: `npx hardhat run scripts/check-facet-addresses.ts --network luksoTestnet`
+
+## Documentation
+
+Complete documentation available in: `GRIDOTTO_COMPLETE_DOCUMENTATION.md`
+
+## Notes
+
+- All functions are working correctly on-chain
+- The system is ready for UI integration
+- Platform fee is set to 5% by default (can be changed by admin)
+- Executor receives 10% of the platform fee as reward
