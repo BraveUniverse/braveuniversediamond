@@ -41,14 +41,14 @@ async function main() {
     try {
         // Deploy Mock LSP7
         const MockLSP7 = await ethers.getContractFactory("MockLSP7");
-        const mockLSP7 = await MockLSP7.deploy("Test Token", "TEST", mainSigner.address);
+        const mockLSP7 = await MockLSP7.deploy("Test Token", "TEST");
         await mockLSP7.waitForDeployment();
         mockLSP7Address = await mockLSP7.getAddress();
         console.log("✅ Mock LSP7 deployed at:", mockLSP7Address);
 
         // Deploy Mock LSP8
         const MockLSP8 = await ethers.getContractFactory("MockLSP8");
-        const mockLSP8 = await MockLSP8.deploy("Test NFT", "TNFT", mainSigner.address);
+        const mockLSP8 = await MockLSP8.deploy("Test NFT", "TNFT");
         await mockLSP8.waitForDeployment();
         mockLSP8Address = await mockLSP8.getAddress();
         console.log("✅ Mock LSP8 deployed at:", mockLSP8Address);

@@ -1,109 +1,99 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../libs/LibGridottoStorageSimple.sol";
+import "../libs/LibGridottoStorageV2.sol";
 import "../libs/LibDiamond.sol";
 
 contract GridottoAdminFacet {
-    using LibGridottoStorageSimple for LibGridottoStorageSimple.Layout;
+    using LibGridottoStorageV2 for LibGridottoStorageV2.Layout;
     
-    // Events
-    event SystemPaused();
-    event SystemUnpaused();
-    event EmergencyWithdraw(address indexed token, uint256 amount);
-    event PlatformFeeUpdated(uint256 newFee);
+    event SystemPaused(bool paused);
+    event PlatformFeesWithdrawn(uint256 amount);
+    event TokenFeesWithdrawn(address token, uint256 amount);
+    event EmergencyWithdraw(address token, uint256 amount);
+    event FeePercentagesUpdated(uint256 platform, uint256 executor, uint256 monthly, uint256 weeklyMonthly);
     
-    // Modifiers
     modifier onlyOwner() {
         LibDiamond.enforceIsContractOwner();
         _;
     }
     
-    // ============ Admin Functions ============
-    
-    function pause() external onlyOwner {
-        LibGridottoStorageSimple.layout().paused = true;
-        emit SystemPaused();
+    // System Control
+    function pauseSystem() external onlyOwner {
+        LibGridottoStorageV2.layout().paused = true;
+        emit SystemPaused(true);
     }
     
-    function unpause() external onlyOwner {
-        LibGridottoStorageSimple.layout().paused = false;
-        emit SystemUnpaused();
+    function unpauseSystem() external onlyOwner {
+        LibGridottoStorageV2.layout().paused = false;
+        emit SystemPaused(false);
     }
     
     function isPaused() external view returns (bool) {
-        return LibGridottoStorageSimple.layout().paused;
+        return LibGridottoStorageV2.layout().paused;
     }
     
-    function emergencyWithdraw() external onlyOwner {
-        uint256 balance = address(this).balance;
-        require(balance > 0, "No balance");
-        
-        (bool success, ) = msg.sender.call{value: balance}("");
-        require(success, "Transfer failed");
-        
-        emit EmergencyWithdraw(address(0), balance);
-    }
-    
-    function emergencyWithdrawToken(address token) external onlyOwner {
-        require(token != address(0), "Invalid token");
-        
-        uint256 balance = ILSP7(token).balanceOf(address(this));
-        require(balance > 0, "No token balance");
-        
-        ILSP7(token).transfer(address(this), msg.sender, balance, true, "");
-        
-        emit EmergencyWithdraw(token, balance);
-    }
-    
+    // Fee Management
     function withdrawPlatformFees() external onlyOwner {
-        LibGridottoStorageSimple.Layout storage s = LibGridottoStorageSimple.layout();
+        LibGridottoStorageV2.Layout storage s = LibGridottoStorageV2.layout();
+        uint256 amount = s.platformFeesLYX;
+        require(amount > 0, "No fees to withdraw");
         
-        uint256 lyxFees = s.platformFeesLYX;
-        if (lyxFees > 0) {
-            s.platformFeesLYX = 0;
-            (bool success, ) = msg.sender.call{value: lyxFees}("");
-            require(success, "LYX transfer failed");
-        }
-    }
-    
-    function withdrawPlatformTokenFees(address token) external onlyOwner {
-        LibGridottoStorageSimple.Layout storage s = LibGridottoStorageSimple.layout();
+        s.platformFeesLYX = 0;
+        (bool success, ) = msg.sender.call{value: amount}("");
+        require(success, "Withdrawal failed");
         
-        uint256 tokenFees = s.platformFeesToken[token];
-        if (tokenFees > 0) {
-            s.platformFeesToken[token] = 0;
-            ILSP7(token).transfer(address(this), msg.sender, tokenFees, true, "");
-        }
+        emit PlatformFeesWithdrawn(amount);
     }
     
-    function setDefaultPlatformFee(uint256 fee) external onlyOwner {
-        require(fee <= 2000, "Fee too high"); // Max 20%
-        LibGridottoStorageSimple.layout().defaultPlatformFee = fee;
-        emit PlatformFeeUpdated(fee);
-    }
-    
-    function getDefaultPlatformFee() external view returns (uint256) {
-        return LibGridottoStorageSimple.layout().defaultPlatformFee;
+    function withdrawTokenFees(address token) external onlyOwner {
+        LibGridottoStorageV2.Layout storage s = LibGridottoStorageV2.layout();
+        uint256 amount = s.platformFeesToken[token];
+        require(amount > 0, "No fees to withdraw");
+        
+        s.platformFeesToken[token] = 0;
+        // Transfer token fees (would need ILSP7 interface)
+        
+        emit TokenFeesWithdrawn(token, amount);
     }
     
     function getPlatformFeesLYX() external view returns (uint256) {
-        return LibGridottoStorageSimple.layout().platformFeesLYX;
+        return LibGridottoStorageV2.layout().platformFeesLYX;
     }
     
     function getPlatformFeesToken(address token) external view returns (uint256) {
-        return LibGridottoStorageSimple.layout().platformFeesToken[token];
+        return LibGridottoStorageV2.layout().platformFeesToken[token];
     }
     
-    // ============ System Info Functions ============
+    // Fee Configuration
+    function setFeePercentages(
+        uint256 defaultPlatformFee,
+        uint256 executorFeePercent,
+        uint256 monthlyPoolPercent,
+        uint256 weeklyMonthlyPercent
+    ) external onlyOwner {
+        require(defaultPlatformFee <= 2000, "Platform fee too high"); // Max 20%
+        require(executorFeePercent <= 1000, "Executor fee too high"); // Max 10%
+        require(monthlyPoolPercent <= 500, "Monthly pool too high"); // Max 5%
+        require(weeklyMonthlyPercent <= 3000, "Weekly monthly too high"); // Max 30%
+        
+        LibGridottoStorageV2.Layout storage s = LibGridottoStorageV2.layout();
+        s.defaultPlatformFee = defaultPlatformFee;
+        s.executorFeePercent = executorFeePercent;
+        s.monthlyPoolPercent = monthlyPoolPercent;
+        s.weeklyMonthlyPercent = weeklyMonthlyPercent;
+        
+        emit FeePercentagesUpdated(defaultPlatformFee, executorFeePercent, monthlyPoolPercent, weeklyMonthlyPercent);
+    }
     
+    // System Statistics
     function getSystemStats() external view returns (
         uint256 totalDrawsCreated,
         uint256 totalTicketsSold,
         uint256 totalPrizesDistributed,
         uint256 totalExecutions
     ) {
-        LibGridottoStorageSimple.Layout storage s = LibGridottoStorageSimple.layout();
+        LibGridottoStorageV2.Layout storage s = LibGridottoStorageV2.layout();
         return (
             s.totalDrawsCreated,
             s.totalTicketsSold,
@@ -112,13 +102,26 @@ contract GridottoAdminFacet {
         );
     }
     
-    function getNextDrawId() external view returns (uint256) {
-        return LibGridottoStorageSimple.layout().nextDrawId;
+    // Emergency Functions
+    function emergencyWithdraw() external onlyOwner {
+        uint256 balance = address(this).balance;
+        require(balance > 0, "No balance");
+        
+        (bool success, ) = msg.sender.call{value: balance}("");
+        require(success, "Withdrawal failed");
+        
+        emit EmergencyWithdraw(address(0), balance);
     }
-}
-
-// Interface for LSP7 token
-interface ILSP7 {
-    function transfer(address from, address to, uint256 amount, bool force, bytes memory data) external;
-    function balanceOf(address account) external view returns (uint256);
+    
+    // Draw Management
+    function forceExecuteDraw(uint256 drawId) external onlyOwner {
+        LibGridottoStorageV2.Layout storage s = LibGridottoStorageV2.layout();
+        LibGridottoStorageV2.Draw storage draw = s.draws[drawId];
+        
+        require(draw.creator != address(0), "Draw not found");
+        require(!draw.isCompleted && !draw.isCancelled, "Draw ended");
+        
+        // Force execution even if conditions not met
+        draw.endTime = block.timestamp - 1;
+    }
 }

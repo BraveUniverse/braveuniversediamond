@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../libs/LibGridottoStorageSimple.sol";
+import "../libs/LibGridottoStorageV2.sol";
 
 contract GridottoLeaderboardFacet {
-    using LibGridottoStorageSimple for LibGridottoStorageSimple.Layout;
+    using LibGridottoStorageV2 for LibGridottoStorageV2.Layout;
     
     // ============ Leaderboard Structs ============
     
@@ -47,14 +47,14 @@ contract GridottoLeaderboardFacet {
     // ============ View Functions ============
     
     function getTopWinners(uint256 limit) external view returns (TopWinner[] memory) {
-        LibGridottoStorageSimple.Layout storage s = LibGridottoStorageSimple.layout();
+        LibGridottoStorageV2.Layout storage s = LibGridottoStorageV2.layout();
         
         // Collect all winners
         address[] memory winners = new address[](100);
         uint256 winnerCount = 0;
         
         for (uint256 drawId = 1; drawId <= s.nextDrawId && winnerCount < 100; drawId++) {
-            LibGridottoStorageSimple.Draw storage draw = s.draws[drawId];
+            LibGridottoStorageV2.Draw storage draw = s.draws[drawId];
             if (draw.isCompleted) {
                 for (uint256 i = 0; i < draw.winners.length; i++) {
                     address winner = draw.winners[i];
@@ -82,7 +82,7 @@ contract GridottoLeaderboardFacet {
             
             // Find last win time
             for (uint256 drawId = s.nextDrawId; drawId >= 1; drawId--) {
-                LibGridottoStorageSimple.Draw storage draw = s.draws[drawId];
+                LibGridottoStorageV2.Draw storage draw = s.draws[drawId];
                 if (draw.isCompleted) {
                     for (uint256 j = 0; j < draw.winners.length; j++) {
                         if (draw.winners[j] == winner) {
@@ -117,14 +117,14 @@ contract GridottoLeaderboardFacet {
     }
     
     function getTopTicketBuyers(uint256 limit) external view returns (TopTicketBuyer[] memory) {
-        LibGridottoStorageSimple.Layout storage s = LibGridottoStorageSimple.layout();
+        LibGridottoStorageV2.Layout storage s = LibGridottoStorageV2.layout();
         
         // Collect all buyers
         address[] memory buyers = new address[](100);
         uint256 buyerCount = 0;
         
         for (uint256 drawId = 1; drawId <= s.nextDrawId && buyerCount < 100; drawId++) {
-            LibGridottoStorageSimple.Draw storage draw = s.draws[drawId];
+            LibGridottoStorageV2.Draw storage draw = s.draws[drawId];
             for (uint256 i = 0; i < draw.participants.length && buyerCount < 100; i++) {
                 address buyer = draw.participants[i];
                 bool found = false;
@@ -150,7 +150,7 @@ contract GridottoLeaderboardFacet {
             
             // Find last purchase time
             for (uint256 drawId = s.nextDrawId; drawId >= 1; drawId--) {
-                LibGridottoStorageSimple.Draw storage draw = s.draws[drawId];
+                LibGridottoStorageV2.Draw storage draw = s.draws[drawId];
                 if (draw.hasParticipated[buyer]) {
                     lastPurchaseTime = draw.startTime; // Approximate
                     break;
@@ -180,7 +180,7 @@ contract GridottoLeaderboardFacet {
     }
     
     function getTopDrawCreators(uint256 limit) external view returns (TopDrawCreator[] memory) {
-        LibGridottoStorageSimple.Layout storage s = LibGridottoStorageSimple.layout();
+        LibGridottoStorageV2.Layout storage s = LibGridottoStorageV2.layout();
         
         // Collect all creators
         address[] memory creators = new address[](50);
@@ -212,7 +212,7 @@ contract GridottoLeaderboardFacet {
             uint256 totalRevenue = 0;
             
             for (uint256 drawId = 1; drawId <= s.nextDrawId; drawId++) {
-                LibGridottoStorageSimple.Draw storage draw = s.draws[drawId];
+                LibGridottoStorageV2.Draw storage draw = s.draws[drawId];
                 if (draw.creator == creator) {
                     if (draw.isCompleted) {
                         successfulDraws++;
@@ -248,14 +248,14 @@ contract GridottoLeaderboardFacet {
     }
     
     function getTopExecutors(uint256 limit) external view returns (TopExecutor[] memory) {
-        LibGridottoStorageSimple.Layout storage s = LibGridottoStorageSimple.layout();
+        LibGridottoStorageV2.Layout storage s = LibGridottoStorageV2.layout();
         
         // Collect all executors
         address[] memory executors = new address[](50);
         uint256 executorCount = 0;
         
         for (uint256 drawId = 1; drawId <= s.nextDrawId && executorCount < 50; drawId++) {
-            LibGridottoStorageSimple.Draw storage draw = s.draws[drawId];
+            LibGridottoStorageV2.Draw storage draw = s.draws[drawId];
             if (draw.isCompleted && draw.executor != address(0)) {
                 bool found = false;
                 for (uint256 j = 0; j < executorCount; j++) {
@@ -300,7 +300,7 @@ contract GridottoLeaderboardFacet {
     }
     
     function getPlatformStats() external view returns (PlatformStats memory) {
-        LibGridottoStorageSimple.Layout storage s = LibGridottoStorageSimple.layout();
+        LibGridottoStorageV2.Layout storage s = LibGridottoStorageV2.layout();
         
         return PlatformStats({
             totalPrizesDistributed: s.totalPrizesDistributed,
