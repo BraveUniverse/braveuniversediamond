@@ -1,0 +1,206 @@
+[
+  {
+    "inputs": [],
+    "name": "getPlatformStats",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "totalPrizesDistributed",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalTicketsSold",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalDrawsCreated",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalExecutions",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct GridottoLeaderboardFacet.PlatformStats",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "limit",
+        "type": "uint256"
+      }
+    ],
+    "name": "getTopDrawCreators",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "creator",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "drawsCreated",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalRevenue",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "successfulDraws",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "successRate",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct GridottoLeaderboardFacet.TopDrawCreator[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "limit",
+        "type": "uint256"
+      }
+    ],
+    "name": "getTopExecutors",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "executor",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "executionCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalFeesEarned",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "averageExecutionTime",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct GridottoLeaderboardFacet.TopExecutor[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "limit",
+        "type": "uint256"
+      }
+    ],
+    "name": "getTopTicketBuyers",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "player",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalTickets",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalSpent",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lastPurchaseTime",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct GridottoLeaderboardFacet.TopTicketBuyer[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "limit",
+        "type": "uint256"
+      }
+    ],
+    "name": "getTopWinners",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "player",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalWins",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalWinnings",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lastWinTime",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct GridottoLeaderboardFacet.TopWinner[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
