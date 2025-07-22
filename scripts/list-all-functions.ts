@@ -1,99 +1,101 @@
 import { ethers } from "hardhat";
+import fs from "fs";
 
 async function main() {
-    console.log("📋 Listing all functions in Diamond...\n");
+    console.log("📋 Listing All Functions by Facet...\n");
     
     const diamondAddress = "0x5Ad808FAE645BA3682170467114e5b80A70bF276";
-    
-    // Get diamond loupe
     const diamondLoupe = await ethers.getContractAt("DiamondLoupeFacet", diamondAddress);
     
-    // Get all facet addresses
-    const facetAddresses = await diamondLoupe.facetAddresses();
+    // Known facet contracts for mapping
+    const facetContracts: { [key: string]: string } = {
+        "GridottoFacet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f",
+        "GridottoMissingFacet": "0x6A654c9b8F9Cfe304429fAbe3F20B4d092996E2d",
+        "GridottoFixedViewFacet": "0x5Fce5CE5F5b13458218DB5856D84Ca25476BBcFa",
+        "GridottoFixedPurchaseFacet": "0x43a60b7adFf659Daa896CA7d6D0b83A0337415a0",
+        "GridottoLeaderboardFacet": "0x362630096659c10F2b11d57e3a13a94F11E62685",
+        "GridottoExecutionFacet": "0x7440762Df9E369E1b7BA2942d2Bf4605B51880C2",
+        "GridottoUIHelperFacet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D",
+        "AdminFacet": "0x71E30D0055d57C796EB9F9fB94AD128B4C377F9B"
+    };
     
-    console.log(`Found ${facetAddresses.length} facets in diamond\n`);
-    
-    // For each facet, get its functions
-    for (const facetAddress of facetAddresses) {
-        console.log(`\n📍 Facet: ${facetAddress}`);
-        console.log("=" + "=".repeat(60));
-        
-        const selectors = await diamondLoupe.facetFunctionSelectors(facetAddress);
-        console.log(`Functions: ${selectors.length}`);
-        
-        // Try to identify function names
-        const functionNames: string[] = [];
-        
-        // Check against known interfaces
-        const interfaces = [
-            "GridottoFacet",
-            "GridottoPhase3Facet", 
-            "GridottoPhase4Facet",
-            "GridottoExecutionFacet",
-            "GridottoUIHelperFacet",
-            "AdminFacet",
-            "OracleFacet",
-            "DiamondLoupeFacet",
-            "DiamondCutFacet",
-            "OwnershipFacet",
-            "GridottoMissingFacet"
-        ];
-        
-        for (const interfaceName of interfaces) {
-            try {
-                const contract = await ethers.getContractAt(interfaceName, facetAddress);
-                
-                for (const selector of selectors) {
-                    try {
-                        const fragment = contract.interface.getFunction(selector);
-                        if (fragment) {
-                            functionNames.push(`${fragment.name}${selector}`);
-                        }
-                    } catch (e) {
-                        // Not in this interface
-                    }
-                }
-            } catch (e) {
-                // Interface not found
-            }
-        }
-        
-        // Print functions
-        if (functionNames.length > 0) {
-            console.log("\nIdentified functions:");
-            functionNames.forEach(name => console.log(`  - ${name}`));
-        } else {
-            console.log("\nSelectors:");
-            selectors.forEach(selector => console.log(`  - ${selector}`));
-        }
-        
-        // Check for draw creation functions
-        const drawCreationSelectors = [
-            ethers.id("createUserDraw(uint8,uint256,uint256,uint256,(uint8,uint256[],uint256,uint256),uint8,address,uint256,bytes32[])").slice(0, 10),
-            ethers.id("createTokenDraw(uint8,address,uint256,uint256,uint256,(uint8,uint256[],uint256,uint256),uint8,address,uint256,bytes32[])").slice(0, 10),
-            ethers.id("createAdvancedDraw((uint8,uint256,uint256,uint256,uint256,uint256,uint256,uint8,uint256,uint256,uint256,(uint256[],uint256,uint256),(address,uint256,uint256,uint256),(uint8,address,uint256,bytes32[])))").slice(0, 10)
-        ];
-        
-        for (const drawSelector of drawCreationSelectors) {
-            if (selectors.includes(drawSelector)) {
-                console.log(`\n✅ Found draw creation function: ${drawSelector}`);
-            }
-        }
+    // Reverse mapping
+    const addressToName: { [key: string]: string } = {};
+    for (const [name, address] of Object.entries(facetContracts)) {
+        addressToName[address.toLowerCase()] = name;
     }
     
-    // Specifically check for createUserDraw
-    console.log("\n\n🔍 Checking createUserDraw specifically...");
-    const createUserDrawSelector = "0xd9422c31"; // From previous output
     try {
-        const facetAddress = await diamondLoupe.facetAddress(createUserDrawSelector);
-        if (facetAddress !== ethers.ZeroAddress) {
-            console.log(`✅ createUserDraw found at: ${facetAddress}`);
-            console.log("You CAN create draws!");
-        } else {
-            console.log("❌ createUserDraw NOT found");
+        const facetAddresses = await diamondLoupe.facetAddresses();
+        const allFunctions: { [category: string]: string[] } = {
+            "Draw Creation": [],
+            "Ticket Purchase": [],
+            "View Functions": [],
+            "Execution": [],
+            "Claiming": [],
+            "Admin": [],
+            "Leaderboard": [],
+            "UI Helper": [],
+            "Other": []
+        };
+        
+        for (const facetAddress of facetAddresses) {
+            const facetName = addressToName[facetAddress.toLowerCase()] || facetAddress;
+            const selectors = await diamondLoupe.facetFunctionSelectors(facetAddress);
+            
+            console.log(`\n${facetName}:`);
+            console.log(`Address: ${facetAddress}`);
+            console.log(`Functions: ${selectors.length}`);
+            
+            // Try to get function names from known interfaces
+            for (const selector of selectors) {
+                // Categorize based on selector patterns
+                let category = "Other";
+                let functionName = selector;
+                
+                // Try to decode function name
+                try {
+                    // Common function patterns
+                    if (selector.includes("create")) category = "Draw Creation";
+                    else if (selector.includes("buy") || selector.includes("purchase")) category = "Ticket Purchase";
+                    else if (selector.includes("get") || selector.includes("view")) category = "View Functions";
+                    else if (selector.includes("execute")) category = "Execution";
+                    else if (selector.includes("claim")) category = "Claiming";
+                    else if (selector.includes("admin") || selector.includes("emergency")) category = "Admin";
+                    else if (selector.includes("Top") || selector.includes("leaderboard")) category = "Leaderboard";
+                    else if (selector.includes("active") || selector.includes("participated")) category = "UI Helper";
+                    
+                    console.log(`  - ${selector} (${category})`);
+                    allFunctions[category].push(`${facetName}.${selector}`);
+                } catch (e) {
+                    console.log(`  - ${selector}`);
+                }
+            }
         }
-    } catch (e) {
-        console.log("Error checking createUserDraw");
+        
+        // Summary
+        console.log("\n\n📊 FUNCTION SUMMARY BY CATEGORY:");
+        console.log("================================");
+        
+        for (const [category, functions] of Object.entries(allFunctions)) {
+            if (functions.length > 0) {
+                console.log(`\n${category}: ${functions.length} functions`);
+                functions.forEach(f => console.log(`  - ${f}`));
+            }
+        }
+        
+        // Save to file for restructuring
+        fs.writeFileSync("function-analysis.json", JSON.stringify({
+            totalFacets: facetAddresses.length,
+            totalFunctions: facetAddresses.reduce((sum, addr) => sum + allFunctions[addr]?.length || 0, 0),
+            facetMapping: addressToName,
+            functionsByCategory: allFunctions
+        }, null, 2));
+        
+        console.log("\n✅ Analysis saved to function-analysis.json");
+        
+    } catch (error: any) {
+        console.error("Error:", error.message);
     }
 }
 

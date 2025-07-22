@@ -1,0 +1,854 @@
+{
+  "totalFunctions": 165,
+  "functionsByCategory": {
+    "Draw Creation": [
+      {
+        "name": "createUserDraw",
+        "selector": "0x88b22ca9",
+        "facet": "0x6A654c9b8F9Cfe304429fAbe3F20B4d092996E2d"
+      },
+      {
+        "name": "createTokenDraw",
+        "selector": "0x93d4fa3c",
+        "facet": "0x6A654c9b8F9Cfe304429fAbe3F20B4d092996E2d"
+      },
+      {
+        "name": "createUserDraw",
+        "selector": "0xd9422c31",
+        "facet": "0x362630096659c10F2b11d57e3a13a94F11E62685"
+      }
+    ],
+    "Ticket Purchase": [
+      {
+        "name": "buyUserDrawTicket",
+        "selector": "0xd6be15d1",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "getTopTicketBuyers",
+        "selector": "0x295d787c",
+        "facet": "0x362630096659c10F2b11d57e3a13a94F11E62685"
+      },
+      {
+        "name": "getDrawParticipantsWithTickets",
+        "selector": "0x6a864363",
+        "facet": "0x5514528F3101FB6a16A4B13685dC15450589FC87"
+      },
+      {
+        "name": "buyTicketsFixed",
+        "selector": "0xaf4980b8",
+        "facet": "0x43a60b7adFf659Daa896CA7d6D0b83A0337415a0"
+      },
+      {
+        "name": "buyMultipleDrawsFixed",
+        "selector": "0x94e1ab3f",
+        "facet": "0x43a60b7adFf659Daa896CA7d6D0b83A0337415a0"
+      },
+      {
+        "name": "getTicketCost",
+        "selector": "0x85a37747",
+        "facet": "0x43a60b7adFf659Daa896CA7d6D0b83A0337415a0"
+      }
+    ],
+    "View Functions": [
+      {
+        "name": "getUserDraw",
+        "selector": "0x1b00210c",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "getActiveUserDraws",
+        "selector": "0xcab230d2",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "getActiveTokenDraws",
+        "selector": "0x33974e54",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "getActiveNFTDraws",
+        "selector": "0xf3160745",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "getUserParticipatedDraws",
+        "selector": "0x249048f7",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "getTopWinners",
+        "selector": "0xe44ad38c",
+        "facet": "0x362630096659c10F2b11d57e3a13a94F11E62685"
+      },
+      {
+        "name": "getTopDrawCreators",
+        "selector": "0x533c6ecf",
+        "facet": "0x362630096659c10F2b11d57e3a13a94F11E62685"
+      },
+      {
+        "name": "getTopExecutors",
+        "selector": "0x48c77327",
+        "facet": "0x362630096659c10F2b11d57e3a13a94F11E62685"
+      },
+      {
+        "name": "getPlatformStats",
+        "selector": "0xad527a16",
+        "facet": "0x362630096659c10F2b11d57e3a13a94F11E62685"
+      },
+      {
+        "name": "getDrawTiming",
+        "selector": "0x371b6d0f",
+        "facet": "0x5514528F3101FB6a16A4B13685dC15450589FC87"
+      },
+      {
+        "name": "getUserDrawInfo",
+        "selector": "0xc7f9b651",
+        "facet": "0x5514528F3101FB6a16A4B13685dC15450589FC87"
+      },
+      {
+        "name": "getUserDrawFixed",
+        "selector": "0xfbf39f2f",
+        "facet": "0x5Fce5CE5F5b13458218DB5856D84Ca25476BBcFa"
+      },
+      {
+        "name": "isDrawActive",
+        "selector": "0xe03fd426",
+        "facet": "0x5Fce5CE5F5b13458218DB5856D84Ca25476BBcFa"
+      },
+      {
+        "name": "getDrawPrizeConfig",
+        "selector": "0x018c9933",
+        "facet": "0x5Fce5CE5F5b13458218DB5856D84Ca25476BBcFa"
+      },
+      {
+        "name": "getDrawStats",
+        "selector": "0x09ddc03c",
+        "facet": "0x5Fce5CE5F5b13458218DB5856D84Ca25476BBcFa"
+      },
+      {
+        "name": "getActiveDraws",
+        "selector": "0x5588ad7c",
+        "facet": "0x5Fce5CE5F5b13458218DB5856D84Ca25476BBcFa"
+      }
+    ],
+    "Execution": [
+      {
+        "name": "executeUserDraw",
+        "selector": "0xf94dced3",
+        "facet": "0x7440762Df9E369E1b7BA2942d2Bf4605B51880C2"
+      },
+      {
+        "name": "executeTokenDraw",
+        "selector": "0xda6fba5e",
+        "facet": "0x7440762Df9E369E1b7BA2942d2Bf4605B51880C2"
+      },
+      {
+        "name": "executeNFTDraw",
+        "selector": "0xbfdf2723",
+        "facet": "0x7440762Df9E369E1b7BA2942d2Bf4605B51880C2"
+      }
+    ],
+    "Claiming": [
+      {
+        "name": "claimUserDrawPrize",
+        "selector": "0x6481c5e6",
+        "facet": "0x7440762Df9E369E1b7BA2942d2Bf4605B51880C2"
+      },
+      {
+        "name": "claimTokenDrawPrize",
+        "selector": "0xd3a8c52e",
+        "facet": "0x7440762Df9E369E1b7BA2942d2Bf4605B51880C2"
+      },
+      {
+        "name": "claimNFTDrawPrize",
+        "selector": "0xdbdff2c1",
+        "facet": "0x7440762Df9E369E1b7BA2942d2Bf4605B51880C2"
+      }
+    ],
+    "Admin": [
+      {
+        "name": "unpause",
+        "selector": "0x3f4ba83a",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "pause",
+        "selector": "0x8456cb59",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "cancelDrawAsAdmin",
+        "selector": "0xc75ec1dd",
+        "facet": "0x71E30D0055d57C796EB9F9fB94AD128B4C377F9B"
+      },
+      {
+        "name": "emergencyWithdraw",
+        "selector": "0x3c4a901a",
+        "facet": "0x71E30D0055d57C796EB9F9fB94AD128B4C377F9B"
+      }
+    ],
+    "Leaderboard": [],
+    "UI Helper": [],
+    "Diamond Standard": [
+      {
+        "name": "diamondCut",
+        "selector": "0x1f931c1c",
+        "facet": "0x528B2aD05dB526a2245c6621cB7D320E127d3be8"
+      },
+      {
+        "name": "facetAddress",
+        "selector": "0xcdffacc6",
+        "facet": "0xC5B9bb6d38B0f9E908BCa96E2154fF1C5ceca9D1"
+      },
+      {
+        "name": "facetAddresses",
+        "selector": "0x52ef6b2c",
+        "facet": "0xC5B9bb6d38B0f9E908BCa96E2154fF1C5ceca9D1"
+      },
+      {
+        "name": "facetFunctionSelectors",
+        "selector": "0xadfca15e",
+        "facet": "0xC5B9bb6d38B0f9E908BCa96E2154fF1C5ceca9D1"
+      },
+      {
+        "name": "facets",
+        "selector": "0x7a0ed627",
+        "facet": "0xC5B9bb6d38B0f9E908BCa96E2154fF1C5ceca9D1"
+      },
+      {
+        "name": "owner",
+        "selector": "0x8da5cb5b",
+        "facet": "0x6D2E0C2205A0660A6C5F0a0fAAA61D8107cC8260"
+      }
+    ],
+    "Unknown": [
+      {
+        "name": "supportsInterface",
+        "selector": "0x01ffc9a7",
+        "facet": "0xC5B9bb6d38B0f9E908BCa96E2154fF1C5ceca9D1"
+      },
+      {
+        "name": "transferOwnership",
+        "selector": "0xf2fde38b",
+        "facet": "0x6D2E0C2205A0660A6C5F0a0fAAA61D8107cC8260"
+      },
+      {
+        "name": "0xe26d908f",
+        "selector": "0xe26d908f",
+        "facet": "0x7440762Df9E369E1b7BA2942d2Bf4605B51880C2"
+      },
+      {
+        "name": "0x474904de",
+        "selector": "0x474904de",
+        "facet": "0x7440762Df9E369E1b7BA2942d2Bf4605B51880C2"
+      },
+      {
+        "name": "0x4c69c00f",
+        "selector": "0x4c69c00f",
+        "facet": "0x7440762Df9E369E1b7BA2942d2Bf4605B51880C2"
+      },
+      {
+        "name": "0xb45515d4",
+        "selector": "0xb45515d4",
+        "facet": "0x7440762Df9E369E1b7BA2942d2Bf4605B51880C2"
+      },
+      {
+        "name": "0xe386c64e",
+        "selector": "0xe386c64e",
+        "facet": "0x7440762Df9E369E1b7BA2942d2Bf4605B51880C2"
+      },
+      {
+        "name": "0x2ce3707e",
+        "selector": "0x2ce3707e",
+        "facet": "0x7440762Df9E369E1b7BA2942d2Bf4605B51880C2"
+      },
+      {
+        "name": "0xb754f47e",
+        "selector": "0xb754f47e",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0xa5f8cdbb",
+        "selector": "0xa5f8cdbb",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x4eb9e27f",
+        "selector": "0x4eb9e27f",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x58363592",
+        "selector": "0x58363592",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "canExecuteDraw",
+        "selector": "0x34a98f98",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x8c44506b",
+        "selector": "0x8c44506b",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0xbd841c94",
+        "selector": "0xbd841c94",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x70740ac9",
+        "selector": "0x70740ac9",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x1c76e418",
+        "selector": "0x1c76e418",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x075aa920",
+        "selector": "0x075aa920",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x6ef8e848",
+        "selector": "0x6ef8e848",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x95ccea67",
+        "selector": "0x95ccea67",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x2d49a7bf",
+        "selector": "0x2d49a7bf",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x832154fe",
+        "selector": "0x832154fe",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0xb6f80c17",
+        "selector": "0xb6f80c17",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0xf777fb84",
+        "selector": "0xf777fb84",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0xd5a962e4",
+        "selector": "0xd5a962e4",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0xe8ed3cff",
+        "selector": "0xe8ed3cff",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0xc01c62c4",
+        "selector": "0xc01c62c4",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0xb0574bb8",
+        "selector": "0xb0574bb8",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0xc0edf5e7",
+        "selector": "0xc0edf5e7",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x0dd09d80",
+        "selector": "0x0dd09d80",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x9c022f9e",
+        "selector": "0x9c022f9e",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x47436432",
+        "selector": "0x47436432",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x147b77cc",
+        "selector": "0x147b77cc",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x4254adc8",
+        "selector": "0x4254adc8",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x686daf6d",
+        "selector": "0x686daf6d",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0xe291a2e9",
+        "selector": "0xe291a2e9",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x118be0f8",
+        "selector": "0x118be0f8",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0xebb62fbb",
+        "selector": "0xebb62fbb",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x0246b8f3",
+        "selector": "0x0246b8f3",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0xe7a7f65c",
+        "selector": "0xe7a7f65c",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x4129b2c9",
+        "selector": "0x4129b2c9",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x68c78bf9",
+        "selector": "0x68c78bf9",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0xdacfa06f",
+        "selector": "0xdacfa06f",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x1039e7b1",
+        "selector": "0x1039e7b1",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0xf5a9d5bb",
+        "selector": "0xf5a9d5bb",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x5af4b2a7",
+        "selector": "0x5af4b2a7",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0xe4c48ad7",
+        "selector": "0xe4c48ad7",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x2b815998",
+        "selector": "0x2b815998",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x3e646a43",
+        "selector": "0x3e646a43",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0xc2bc0fd5",
+        "selector": "0xc2bc0fd5",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "setPaused",
+        "selector": "0x16c38b3c",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x15981650",
+        "selector": "0x15981650",
+        "facet": "0x19dD5210C8301db68725D4e1e36B6022BB731C3f"
+      },
+      {
+        "name": "0x4f1b491b",
+        "selector": "0x4f1b491b",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0x136d8883",
+        "selector": "0x136d8883",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0xca88d5c5",
+        "selector": "0xca88d5c5",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0x82b8cfba",
+        "selector": "0x82b8cfba",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0xe76b844d",
+        "selector": "0xe76b844d",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0xec3d45e8",
+        "selector": "0xec3d45e8",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0xf3290d75",
+        "selector": "0xf3290d75",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0x41566585",
+        "selector": "0x41566585",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0xfe575a87",
+        "selector": "0xfe575a87",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0x10d86b1f",
+        "selector": "0x10d86b1f",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0x4d12b695",
+        "selector": "0x4d12b695",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0x97f735d5",
+        "selector": "0x97f735d5",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0xe8aea220",
+        "selector": "0xe8aea220",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0xebef3814",
+        "selector": "0xebef3814",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0xe0f3aa11",
+        "selector": "0xe0f3aa11",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0x48268bfa",
+        "selector": "0x48268bfa",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0x3d13436d",
+        "selector": "0x3d13436d",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0x497a9de6",
+        "selector": "0x497a9de6",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0xad11135e",
+        "selector": "0xad11135e",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0x0cbd8891",
+        "selector": "0x0cbd8891",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0xaafc03f7",
+        "selector": "0xaafc03f7",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0x71df8d28",
+        "selector": "0x71df8d28",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0xa4c3b091",
+        "selector": "0xa4c3b091",
+        "facet": "0x3d06FbdeAD6bD7e71E75C4576607713E7bbaF49D"
+      },
+      {
+        "name": "0xb062f2f9",
+        "selector": "0xb062f2f9",
+        "facet": "0x71E30D0055d57C796EB9F9fB94AD128B4C377F9B"
+      },
+      {
+        "name": "0x050ec41c",
+        "selector": "0x050ec41c",
+        "facet": "0x71E30D0055d57C796EB9F9fB94AD128B4C377F9B"
+      },
+      {
+        "name": "0x8bd83cce",
+        "selector": "0x8bd83cce",
+        "facet": "0x71E30D0055d57C796EB9F9fB94AD128B4C377F9B"
+      },
+      {
+        "name": "0x3ddffb0c",
+        "selector": "0x3ddffb0c",
+        "facet": "0x71E30D0055d57C796EB9F9fB94AD128B4C377F9B"
+      },
+      {
+        "name": "0xeb0fb419",
+        "selector": "0xeb0fb419",
+        "facet": "0x71E30D0055d57C796EB9F9fB94AD128B4C377F9B"
+      },
+      {
+        "name": "0xa86c1713",
+        "selector": "0xa86c1713",
+        "facet": "0x71E30D0055d57C796EB9F9fB94AD128B4C377F9B"
+      },
+      {
+        "name": "0xeb44c6c6",
+        "selector": "0xeb44c6c6",
+        "facet": "0xfF7A397d8d33f66C8cf4417D6D355CdBF62D482b"
+      },
+      {
+        "name": "0xec9298ad",
+        "selector": "0xec9298ad",
+        "facet": "0xfF7A397d8d33f66C8cf4417D6D355CdBF62D482b"
+      },
+      {
+        "name": "0xef4ae083",
+        "selector": "0xef4ae083",
+        "facet": "0xfF7A397d8d33f66C8cf4417D6D355CdBF62D482b"
+      },
+      {
+        "name": "0x02ce5117",
+        "selector": "0x02ce5117",
+        "facet": "0xfF7A397d8d33f66C8cf4417D6D355CdBF62D482b"
+      },
+      {
+        "name": "0x8f28397a",
+        "selector": "0x8f28397a",
+        "facet": "0x5E3913409445b391d15d31Fe6d81dFC832181901"
+      },
+      {
+        "name": "0x3e239e1a",
+        "selector": "0x3e239e1a",
+        "facet": "0x5E3913409445b391d15d31Fe6d81dFC832181901"
+      },
+      {
+        "name": "0xe7563f3f",
+        "selector": "0xe7563f3f",
+        "facet": "0x5E3913409445b391d15d31Fe6d81dFC832181901"
+      },
+      {
+        "name": "0x8b7e8782",
+        "selector": "0x8b7e8782",
+        "facet": "0x5E3913409445b391d15d31Fe6d81dFC832181901"
+      },
+      {
+        "name": "0x9852595c",
+        "selector": "0x9852595c",
+        "facet": "0x5E3913409445b391d15d31Fe6d81dFC832181901"
+      },
+      {
+        "name": "0x5a9b0b89",
+        "selector": "0x5a9b0b89",
+        "facet": "0x5E3913409445b391d15d31Fe6d81dFC832181901"
+      },
+      {
+        "name": "0x7f89f174",
+        "selector": "0x7f89f174",
+        "facet": "0x5E3913409445b391d15d31Fe6d81dFC832181901"
+      },
+      {
+        "name": "0x5c60da1b",
+        "selector": "0x5c60da1b",
+        "facet": "0x5E3913409445b391d15d31Fe6d81dFC832181901"
+      },
+      {
+        "name": "0x4e71d92d",
+        "selector": "0x4e71d92d",
+        "facet": "0x5E3913409445b391d15d31Fe6d81dFC832181901"
+      },
+      {
+        "name": "0x945c9148",
+        "selector": "0x945c9148",
+        "facet": "0x4f77a86A2295743A2FEB98712A5130A17c1BC2B1"
+      },
+      {
+        "name": "0xd2f73ce5",
+        "selector": "0xd2f73ce5",
+        "facet": "0x4f77a86A2295743A2FEB98712A5130A17c1BC2B1"
+      },
+      {
+        "name": "0x8b069f2a",
+        "selector": "0x8b069f2a",
+        "facet": "0x4f77a86A2295743A2FEB98712A5130A17c1BC2B1"
+      },
+      {
+        "name": "0x5f5e1e15",
+        "selector": "0x5f5e1e15",
+        "facet": "0x4f77a86A2295743A2FEB98712A5130A17c1BC2B1"
+      },
+      {
+        "name": "0x7284e416",
+        "selector": "0x7284e416",
+        "facet": "0x4f77a86A2295743A2FEB98712A5130A17c1BC2B1"
+      },
+      {
+        "name": "0xd1058e59",
+        "selector": "0xd1058e59",
+        "facet": "0x3a0804dA2a0149806Df3E27b3A29CF8056B1213A"
+      },
+      {
+        "name": "0x714a0945",
+        "selector": "0x714a0945",
+        "facet": "0x3a0804dA2a0149806Df3E27b3A29CF8056B1213A"
+      },
+      {
+        "name": "0x4e94b8b7",
+        "selector": "0x4e94b8b7",
+        "facet": "0x3a0804dA2a0149806Df3E27b3A29CF8056B1213A"
+      },
+      {
+        "name": "0x4a884bc9",
+        "selector": "0x4a884bc9",
+        "facet": "0x7A5fC79dd30afFCB4554CaBB9b69258fAcF0Db2a"
+      },
+      {
+        "name": "0x68145d73",
+        "selector": "0x68145d73",
+        "facet": "0x7A5fC79dd30afFCB4554CaBB9b69258fAcF0Db2a"
+      },
+      {
+        "name": "0xdf9de814",
+        "selector": "0xdf9de814",
+        "facet": "0x7A5fC79dd30afFCB4554CaBB9b69258fAcF0Db2a"
+      },
+      {
+        "name": "0xb27a87c3",
+        "selector": "0xb27a87c3",
+        "facet": "0x7A5fC79dd30afFCB4554CaBB9b69258fAcF0Db2a"
+      },
+      {
+        "name": "0xa49a7934",
+        "selector": "0xa49a7934",
+        "facet": "0x7A5fC79dd30afFCB4554CaBB9b69258fAcF0Db2a"
+      },
+      {
+        "name": "0xb41e8915",
+        "selector": "0xb41e8915",
+        "facet": "0x7A5fC79dd30afFCB4554CaBB9b69258fAcF0Db2a"
+      },
+      {
+        "name": "0x3f147923",
+        "selector": "0x3f147923",
+        "facet": "0x7A5fC79dd30afFCB4554CaBB9b69258fAcF0Db2a"
+      },
+      {
+        "name": "0xcdb9a776",
+        "selector": "0xcdb9a776",
+        "facet": "0x7A5fC79dd30afFCB4554CaBB9b69258fAcF0Db2a"
+      },
+      {
+        "name": "0x64aac3ee",
+        "selector": "0x64aac3ee",
+        "facet": "0x7A5fC79dd30afFCB4554CaBB9b69258fAcF0Db2a"
+      },
+      {
+        "name": "0x44ae3192",
+        "selector": "0x44ae3192",
+        "facet": "0x9B7984C91384Fb1c6d77d3419930649f9C30cE97"
+      },
+      {
+        "name": "0x3d140ea8",
+        "selector": "0x3d140ea8",
+        "facet": "0x9B7984C91384Fb1c6d77d3419930649f9C30cE97"
+      },
+      {
+        "name": "0x272cf7ce",
+        "selector": "0x272cf7ce",
+        "facet": "0xa2a91f9F002309e31277F8261c7c3F8b40feCFbA"
+      },
+      {
+        "name": "0x9556d1cc",
+        "selector": "0x9556d1cc",
+        "facet": "0x20d8a683ba9CC258842701554d0ac0D0DFc0112B"
+      },
+      {
+        "name": "0x5b7baf64",
+        "selector": "0x5b7baf64",
+        "facet": "0x20d8a683ba9CC258842701554d0ac0D0DFc0112B"
+      },
+      {
+        "name": "0x57ab0947",
+        "selector": "0x57ab0947",
+        "facet": "0x20d8a683ba9CC258842701554d0ac0D0DFc0112B"
+      },
+      {
+        "name": "0xd2bbf2cd",
+        "selector": "0xd2bbf2cd",
+        "facet": "0x20d8a683ba9CC258842701554d0ac0D0DFc0112B"
+      },
+      {
+        "name": "0xc4d5c94b",
+        "selector": "0xc4d5c94b",
+        "facet": "0x22e6A9eB358643B903F16F5287cde1F9452B5998"
+      },
+      {
+        "name": "0xcda037aa",
+        "selector": "0xcda037aa",
+        "facet": "0x22e6A9eB358643B903F16F5287cde1F9452B5998"
+      },
+      {
+        "name": "0x3e68aa3a",
+        "selector": "0x3e68aa3a",
+        "facet": "0x3Ce5Be0C8E6159CA140f767a6185C9938DbE2ABa"
+      },
+      {
+        "name": "0xd13cff6c",
+        "selector": "0xd13cff6c",
+        "facet": "0x3Ce5Be0C8E6159CA140f767a6185C9938DbE2ABa"
+      },
+      {
+        "name": "0x64e044f1",
+        "selector": "0x64e044f1",
+        "facet": "0x3Ce5Be0C8E6159CA140f767a6185C9938DbE2ABa"
+      },
+      {
+        "name": "0xef23eb20",
+        "selector": "0xef23eb20",
+        "facet": "0x3Ce5Be0C8E6159CA140f767a6185C9938DbE2ABa"
+      }
+    ]
+  },
+  "duplicates": [
+    [
+      "createUserDraw",
+      2
+    ]
+  ]
+}

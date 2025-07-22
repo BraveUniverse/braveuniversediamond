@@ -2,14 +2,16 @@
 pragma solidity ^0.8.19;
 
 import "../libs/LibGridottoStorage.sol";
+import "../libs/LibDiamond.sol";
 
 /**
- * @title GridottoFixedPurchaseFacet
- * @notice Fixed ticket purchase functions that properly handle storage
+ * @title GridottoTicketFacetSimple
+ * @notice Simplified ticket purchase operations
  */
-contract GridottoFixedPurchaseFacet {
+contract GridottoTicketFacetSimple {
     using LibGridottoStorage for LibGridottoStorage.Layout;
     
+    // Events
     event TicketsPurchased(
         uint256 indexed drawId,
         address indexed buyer,
@@ -17,12 +19,18 @@ contract GridottoFixedPurchaseFacet {
         uint256 totalCost
     );
     
+    // Modifiers
+    modifier notPaused() {
+        require(!LibGridottoStorage.layout().paused, "Contract is paused");
+        _;
+    }
+    
     /**
-     * @notice Buy tickets for a user draw with fixed storage handling
+     * @notice Buy tickets for a LYX draw
      * @param drawId The ID of the draw
      * @param amount Number of tickets to buy
      */
-    function buyTicketsFixed(uint256 drawId, uint256 amount) external payable {
+    function buyUserDrawTicket(uint256 drawId, uint256 amount) external payable notPaused {
         LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
         LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
         
@@ -32,7 +40,7 @@ contract GridottoFixedPurchaseFacet {
         require(!draw.isCancelled, "Draw cancelled");
         require(amount > 0, "Amount must be greater than 0");
         
-        // Time validation - using proper storage fields
+        // Time validation
         uint256 currentTime = block.timestamp;
         require(currentTime >= draw.startTime, "Draw not started");
         require(currentTime < draw.endTime, "Draw ended");
@@ -65,70 +73,58 @@ contract GridottoFixedPurchaseFacet {
     }
     
     /**
-     * @notice Buy tickets for multiple draws in one transaction
-     * @param drawIds Array of draw IDs
-     * @param amounts Array of ticket amounts for each draw
+     * @notice Buy tickets for a token draw
+     * @param drawId The ID of the draw
+     * @param amount Number of tickets to buy
      */
-    function buyMultipleDrawsFixed(
-        uint256[] calldata drawIds,
-        uint256[] calldata amounts
-    ) external payable {
-        require(drawIds.length == amounts.length, "Array length mismatch");
-        require(drawIds.length > 0, "Empty arrays");
-        
+    function buyTokenDrawTicket(uint256 drawId, uint256 amount) external notPaused {
         LibGridottoStorage.Layout storage l = LibGridottoStorage.layout();
-        uint256 totalCost = 0;
+        LibGridottoStorage.UserDraw storage draw = l.userDraws[drawId];
+        
+        // Validation
+        require(draw.creator != address(0), "Draw does not exist");
+        require(draw.drawType == LibGridottoStorage.DrawType.USER_LSP7, "Not a token draw");
+        require(!draw.isCompleted, "Draw already completed");
+        require(!draw.isCancelled, "Draw cancelled");
+        require(amount > 0, "Amount must be greater than 0");
+        
+        // Time validation
         uint256 currentTime = block.timestamp;
+        require(currentTime >= draw.startTime, "Draw not started");
+        require(currentTime < draw.endTime, "Draw ended");
         
-        // Validate all draws first
-        for (uint256 i = 0; i < drawIds.length; i++) {
-            LibGridottoStorage.UserDraw storage draw = l.userDraws[drawIds[i]];
-            
-            require(draw.creator != address(0), "Draw does not exist");
-            require(!draw.isCompleted, "Draw already completed");
-            require(!draw.isCancelled, "Draw cancelled");
-            require(amounts[i] > 0, "Amount must be greater than 0");
-            require(currentTime >= draw.startTime, "Draw not started");
-            require(currentTime < draw.endTime, "Draw ended");
-            require(draw.ticketsSold + amounts[i] <= draw.maxTickets, "Exceeds max tickets");
-            
-            totalCost += draw.ticketPrice * amounts[i];
+        // Ticket availability
+        require(draw.ticketsSold + amount <= draw.maxTickets, "Exceeds max tickets");
+        
+        // Payment handling
+        uint256 totalCost = draw.ticketPrice * amount;
+        ILSP7 token = ILSP7(draw.prizeToken);
+        
+        uint256 balanceBefore = token.balanceOf(address(this));
+        token.transfer(msg.sender, address(this), totalCost, true, "");
+        uint256 balanceAfter = token.balanceOf(address(this));
+        
+        require(balanceAfter >= balanceBefore + totalCost, "Token transfer failed");
+        
+        // Update draw state
+        draw.ticketsSold += amount;
+        draw.currentPrizePool += totalCost;
+        
+        // Track user participation
+        if (draw.userTickets[msg.sender] == 0) {
+            draw.participants.push(msg.sender);
+            draw.hasParticipated[msg.sender] = true;
         }
+        draw.userTickets[msg.sender] += amount;
         
-        require(msg.value >= totalCost, "Insufficient payment");
-        
-        // Process purchases
-        for (uint256 i = 0; i < drawIds.length; i++) {
-            LibGridottoStorage.UserDraw storage draw = l.userDraws[drawIds[i]];
-            uint256 amount = amounts[i];
-            uint256 drawCost = draw.ticketPrice * amount;
-            
-            // Update draw state
-            draw.ticketsSold += amount;
-            draw.currentPrizePool += drawCost;
-            
-            // Track user participation
-            if (draw.userTickets[msg.sender] == 0) {
-                draw.participants.push(msg.sender);
-                draw.hasParticipated[msg.sender] = true;
-            }
-            draw.userTickets[msg.sender] += amount;
-            
-            emit TicketsPurchased(drawIds[i], msg.sender, amount, drawCost);
-        }
-        
-        // Refund excess payment
-        if (msg.value > totalCost) {
-            (bool success, ) = msg.sender.call{value: msg.value - totalCost}("");
-            require(success, "Refund failed");
-        }
+        emit TicketsPurchased(drawId, msg.sender, amount, totalCost);
     }
     
     /**
      * @notice Get ticket purchase cost for multiple tickets
      * @param drawId The ID of the draw
      * @param amount Number of tickets
-     * @return totalCost Total cost in wei
+     * @return totalCost Total cost in draw's currency
      */
     function getTicketCost(uint256 drawId, uint256 amount) external view returns (uint256 totalCost) {
         LibGridottoStorage.UserDraw storage draw = LibGridottoStorage.layout().userDraws[drawId];
@@ -136,4 +132,10 @@ contract GridottoFixedPurchaseFacet {
         
         totalCost = draw.ticketPrice * amount;
     }
+}
+
+// Interface for LSP7 token
+interface ILSP7 {
+    function transfer(address from, address to, uint256 amount, bool force, bytes memory data) external;
+    function balanceOf(address account) external view returns (uint256);
 }
