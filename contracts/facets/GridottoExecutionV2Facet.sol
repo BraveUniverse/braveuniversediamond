@@ -91,15 +91,9 @@ contract GridottoExecutionV2Facet {
         s.userDrawsExecuted[msg.sender]++;
         s.userExecutionFees[msg.sender] += executorFee;
         
-        // Pay executor fee
+        // Add executor fee to claimable balance instead of direct transfer
         if (executorFee > 0) {
-            if (draw.drawType == LibGridottoStorageV2.DrawType.USER_LYX || 
-                draw.drawType == LibGridottoStorageV2.DrawType.USER_LSP8) {
-                (bool success, ) = msg.sender.call{value: executorFee}("");
-                require(success, "Executor fee failed");
-            } else if (draw.drawType == LibGridottoStorageV2.DrawType.USER_LSP7) {
-                ILSP7(draw.tokenAddress).transfer(address(this), msg.sender, executorFee, true, "");
-            }
+            s.claimableExecutorFees[msg.sender] += executorFee;
         }
         
         emit DrawExecuted(drawId, msg.sender, draw.winners);

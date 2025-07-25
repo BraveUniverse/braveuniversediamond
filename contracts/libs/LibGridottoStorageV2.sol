@@ -107,6 +107,9 @@ library LibGridottoStorageV2 {
         mapping(address => uint256) userDrawsExecuted;
         mapping(address => uint256) userExecutionFees;
         
+        // V3: Claimable balances
+        mapping(address => uint256) claimableExecutorFees;
+        
         // System state
         bool paused;
         uint256 defaultPlatformFee; // Default 500 = 5%
