@@ -10,15 +10,26 @@ A modular smart contract system built with **EIP-2535 Diamond Standard** for the
 - **Gas Optimized** - Optimized for efficient gas usage
 - **Access Control** - Role-based permission system
 - **Facet Management** - Add, remove, and upgrade contract functions dynamically
+- **Gridotto Lottery System** - Complete lottery platform with multiple draw types
+- **Upfront Fee Deduction** - Automatic fee collection during ticket purchases
+- **Claim Mechanism** - Gas-efficient prize and fee claiming system
+- **Multi-Asset Support** - LYX, LSP7 tokens, and LSP8 NFT draws
 
 ## 🏗️ Architecture
 
 ```
 BraveUniverse Diamond
-├── DiamondCutFacet      # Facet management (add/remove/replace)
-├── DiamondLoupeFacet    # Diamond introspection
-├── OwnershipFacet       # Ownership management
-└── [Future Facets]      # BraveUniverse game mechanics
+├── DiamondCutFacet               # Facet management (add/remove/replace)
+├── DiamondLoupeFacet             # Diamond introspection
+├── OwnershipFacet                # Ownership management
+├── GridottoCoreV2Facet           # Draw creation and ticket purchases
+├── GridottoExecutionV2Facet      # Draw execution and winner selection
+├── GridottoPlatformDrawsFacet    # Weekly and monthly platform draws
+├── GridottoPrizeClaimFacet       # Prize and fee claiming system
+├── GridottoRefundFacet           # Refund handling for cancelled draws
+├── GridottoAdminFacetV2          # Admin functions and fee management
+├── GridottoLeaderboardFacet      # User statistics and leaderboards
+└── GridottoMonthlyTicketsFacet   # Monthly ticket reward system
 ```
 
 ## 🚀 Quick Start
@@ -192,6 +203,29 @@ This diamond serves as the foundation for BraveUniverse game mechanics:
 - **Immutable Functions** - Core functions cannot be removed
 - **Upgrade Safety** - Safe upgrade mechanisms
 
+## 🎲 Gridotto Lottery System
+
+### Draw Types
+1. **Platform Weekly Draw** - 30% fees (20% monthly pool, 5% platform, 5% executor)
+2. **Platform Monthly Draw** - 10% fees (5% platform, 5% executor)
+3. **User LYX Draw** - 12% fees (5% platform, 5% executor, 2% monthly pool)
+4. **User Token Draw** - 10% fees (5% platform, 5% executor)
+5. **User NFT Draw** - 10% fees, creator receives 90% LYX, winner gets NFT
+
+### Key Features
+- **Upfront Fee Deduction** - Fees collected during ticket purchase
+- **Prize Claiming** - Winners claim prizes when convenient
+- **Executor Fee Claims** - Executors accumulate and claim fees
+- **Monthly Tickets** - Reward system for participation
+- **Multi-Asset Support** - LYX, LSP7 tokens, and LSP8 NFTs
+
+### Recent Updates (January 2025)
+- ✅ Fixed nextDrawId storage inconsistency
+- ✅ Implemented complete upfront fee deduction
+- ✅ Added claim mechanism for gas optimization
+- ✅ Enhanced NFT draw mechanics
+- ✅ Consolidated admin functions
+
 ## 🌐 Networks
 
 ### LUKSO Testnet
@@ -199,6 +233,7 @@ This diamond serves as the foundation for BraveUniverse game mechanics:
 - **RPC:** https://rpc.testnet.lukso.network
 - **Explorer:** https://explorer.execution.testnet.lukso.network
 - **Faucet:** https://faucet.testnet.lukso.network
+- **Diamond Address:** 0x5Ad808FAE645BA3682170467114e5b80A70bF276
 
 ## 📝 License
 
