@@ -58,6 +58,7 @@ library LibGridottoStorageV2 {
         
         // V3: Upfront fee collection
         uint256 executorFeeCollected; // Executor fee collected during ticket sales
+        uint256 creatorFeeCollected; // Creator fee collected during ticket sales
     }
 
     struct MonthlyTickets {
