@@ -55,6 +55,9 @@ library LibGridottoStorageV2 {
         
         // Monthly pool contribution (for eligible draws)
         uint256 monthlyPoolContribution;
+        
+        // V3: Upfront fee collection
+        uint256 executorFeeCollected; // Executor fee collected during ticket sales
     }
 
     struct MonthlyTickets {
