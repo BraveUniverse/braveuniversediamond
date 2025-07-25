@@ -39,7 +39,6 @@ contract GridottoCoreV2UpgradeFacet {
         uint256 platformFee = 0;
         uint256 executorFee = 0;
         uint256 monthlyContribution = 0;
-        uint256 creatorFee = 0;
         
         // Calculate fees based on draw type
         if (draw.drawType == LibGridottoStorageV2.DrawType.PLATFORM_WEEKLY) {
@@ -54,26 +53,16 @@ contract GridottoCoreV2UpgradeFacet {
             executorFee = (totalCost * s.executorFeePercent) / 10000; // 5%
             netAmount = totalCost - platformFee - executorFee; // 90% to prize pool
         } else {
-            // User draws: platform fee + executor fee + creator fee + monthly contribution (LYX only)
+            // User draws: platform fee + executor fee + monthly contribution (LYX only)
             platformFee = (totalCost * s.defaultPlatformFee) / 10000; // 5%
             executorFee = (totalCost * s.executorFeePercent) / 10000; // 5%
             
-            // Creator fee (if set)
-            if (draw.config.platformFeePercent > 0) {
-                creatorFee = (totalCost * draw.config.platformFeePercent) / 10000;
-            }
-            
-            // Monthly contribution only for LYX draws
+            // Monthly contribution only for LYX draws (not NFT or token)
             if (draw.drawType == LibGridottoStorageV2.DrawType.USER_LYX) {
                 monthlyContribution = (totalCost * s.monthlyPoolPercent) / 10000; // 2%
             }
             
-            netAmount = totalCost - platformFee - executorFee - creatorFee - monthlyContribution;
-            
-            // Store creator fee to be claimed later
-            if (creatorFee > 0) {
-                draw.creatorFeeCollected += creatorFee;
-            }
+            netAmount = totalCost - platformFee - executorFee - monthlyContribution;
         }
         
         // Handle payment based on draw type
@@ -99,9 +88,6 @@ contract GridottoCoreV2UpgradeFacet {
                 s.monthlyPoolBalance += monthlyContribution;
                 draw.monthlyPoolContribution += monthlyContribution;
             }
-            if (creatorFee > 0) {
-                draw.creatorFeeCollected += creatorFee;
-            }
             
             // Refund excess
             if (msg.value > totalCost) {
@@ -121,9 +107,6 @@ contract GridottoCoreV2UpgradeFacet {
             }
             if (executorFee > 0) {
                 draw.executorFeeCollected += executorFee;
-            }
-            if (creatorFee > 0) {
-                draw.creatorFeeCollected += creatorFee;
             }
             // Note: No monthly contribution for token draws
         }

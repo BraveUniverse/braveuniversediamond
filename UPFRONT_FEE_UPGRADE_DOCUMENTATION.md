@@ -1,6 +1,7 @@
 # 🎯 Gridotto Upfront Fee Deduction Upgrade Documentation
 
 ## 📅 Deployment Date: January 25, 2025
+## 📅 Final Update: January 25, 2025 - Complete Fee Structure
 
 ## 🔄 Overview
 
@@ -29,20 +30,44 @@ This document describes the major upgrade to Gridotto's fee collection mechanism
   - **90% → Prize Pool**
 
 #### User Draws:
-- **0% fees** - Users receive 100% of ticket sales
-- No platform fee, executor fee, or monthly contribution
+- **LYX Draw**: 12% total deduction
+  - 5% → Platform Fee (`platformFeesLYX`)
+  - 5% → Executor Fee (`draw.executorFeeCollected`)
+  - 2% → Monthly Pool (`monthlyPoolBalance`)
+  - **88% → Prize Pool**
 
-### 3. **New Storage Field**
+- **Token Draw**: 10% total deduction
+  - 5% → Platform Fee (`platformFeesToken[tokenAddress]`)
+  - 5% → Executor Fee (`draw.executorFeeCollected`)
+  - **90% → Prize Pool**
+
+- **NFT Draw**: 10% total deduction
+  - 5% → Platform Fee (`platformFeesLYX`)
+  - 5% → Executor Fee (`draw.executorFeeCollected`)
+  - **90% → Creator (as LYX)**
+  - **NFT → Winner**
+
+### 3. **New Storage Fields**
 ```solidity
 // In Draw struct
 uint256 executorFeeCollected; // Stores executor fee collected during ticket sales
+
+// In Layout struct
+mapping(address => uint256) claimableExecutorFees; // Executor fees ready to claim
 ```
 
-### 4. **Claim Mechanism Integration**
-- **GridottoPrizeClaimFacet** (`0x9d00fa1F4BBBCcE5AFE72443CA5DdC380e45606f`)
-  - `claimPrize(drawId)` - Winners claim their prizes
-  - `claimExecutorFees()` - Executors claim accumulated fees
-  - `getClaimableExecutorFees(address)` - Check claimable balance
+### 4. **Updated Facets & Functions**
+
+#### GridottoCoreV2UpgradeFacet (`0x074C7E973aaf1fA6581e84E94d0fc00eBEE18307`)
+- `buyTickets()` - Now deducts fees upfront for ALL draw types
+
+#### GridottoExecutionV2UpgradeFacet (`0x5DA06fcb37E973C06112A2089d92a140653Af18B`)
+- `executeDraw()` - No fee deduction, adds executor fee to claimable
+
+#### GridottoPrizeClaimFacet (`0xF6847262fb0634365d3bE9CF079aD9Ed21dE4ff7`)
+- `claimPrize()` - Winners claim prizes, NFT creators receive LYX
+- `claimExecutorFees()` - Executors claim accumulated fees
+- `getClaimableExecutorFees()` - Check claimable balance
 
 ## 🔧 Technical Details
 
@@ -86,9 +111,10 @@ s.monthlyPoolBalance += monthlyContribution;
 
 ### 2. **Ticket Purchase**
 - Update confirmation dialog to show fee breakdown
-- Example for weekly draw:
+- Examples:
+
+  **Weekly Draw (10 tickets @ 1 LYX):**
   ```
-  You are buying: 10 tickets
   Total Cost: 10 LYX
   
   Fee Breakdown:
@@ -96,6 +122,29 @@ s.monthlyPoolBalance += monthlyContribution;
   - To Monthly Pool: 2 LYX (20%)
   - Platform Fee: 0.5 LYX (5%)
   - Executor Fee: 0.5 LYX (5%)
+  ```
+
+  **User LYX Draw (10 tickets @ 1 LYX):**
+  ```
+  Total Cost: 10 LYX
+  
+  Fee Breakdown:
+  - To Prize Pool: 8.8 LYX (88%)
+  - To Monthly Pool: 0.2 LYX (2%)
+  - Platform Fee: 0.5 LYX (5%)
+  - Executor Fee: 0.5 LYX (5%)
+  ```
+
+  **NFT Draw (10 tickets @ 1 LYX):**
+  ```
+  Total Cost: 10 LYX
+  
+  Fee Breakdown:
+  - To Creator: 9 LYX (90%)
+  - Platform Fee: 0.5 LYX (5%)
+  - Executor Fee: 0.5 LYX (5%)
+  
+  Winner receives: [NFT Name]
   ```
 
 ### 3. **Executor Dashboard**
@@ -132,9 +181,20 @@ s.monthlyPoolBalance += monthlyContribution;
   - 5 LYX → Platform
   - 5 LYX → Executor (claimable)
 
-### User Draw - 100 LYX in ticket sales:
-- **Before**: Prize Pool = 100 LYX, platform takes cut at execution
-- **After**: Prize Pool = 100 LYX, no fees for user draws!
+### LYX User Draw - 100 LYX in ticket sales:
+- **Before**: Prize Pool = 100 LYX, fees deducted at execution
+- **After**: Prize Pool = 88 LYX, fees already deducted
+  - 5 LYX → Platform
+  - 5 LYX → Executor (claimable)
+  - 2 LYX → Monthly Pool
+
+### NFT User Draw - 100 LYX in ticket sales:
+- **Before**: Complex fee distribution at execution
+- **After**: 
+  - Creator receives: 90 LYX (when winner claims)
+  - Winner receives: NFT
+  - Platform: 5 LYX
+  - Executor: 5 LYX (claimable)
 
 ## 🔐 Security Considerations
 

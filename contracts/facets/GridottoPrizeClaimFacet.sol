@@ -63,9 +63,15 @@ contract GridottoPrizeClaimFacet {
             // Transfer token prize
             ILSP7(draw.tokenAddress).transfer(address(this), msg.sender, prizeAmount, true, "");
         } else if (draw.drawType == LibGridottoStorageV2.DrawType.USER_LSP8) {
-            // Transfer NFT
+            // Transfer NFT to winner
             require(draw.nftTokenIds.length > 0, "No NFT to transfer");
             ILSP8(draw.tokenAddress).transfer(address(this), msg.sender, draw.nftTokenIds[0], true, "");
+            
+            // Transfer prize pool (LYX) to creator
+            if (prizeAmount > 0) {
+                (bool creatorSuccess, ) = draw.creator.call{value: prizeAmount}("");
+                require(creatorSuccess, "Creator payment failed");
+            }
         }
         
         // Update stats

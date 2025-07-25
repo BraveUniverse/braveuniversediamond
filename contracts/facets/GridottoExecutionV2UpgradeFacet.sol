@@ -66,11 +66,8 @@ contract GridottoExecutionV2UpgradeFacet {
             s.claimableExecutorFees[msg.sender] += draw.executorFeeCollected;
         }
         
-        // For NFT draws (USER_LSP8), transfer creator fee to creator
-        if (draw.drawType == LibGridottoStorageV2.DrawType.USER_LSP8 && draw.creatorFeeCollected > 0) {
-            (bool success, ) = draw.creator.call{value: draw.creatorFeeCollected}("");
-            require(success, "Creator fee transfer failed");
-        }
+        // For NFT draws (USER_LSP8), creator receives the prize pool amount
+        // This happens when winner claims the NFT
         
         // Update stats
         s.totalExecutions++;
