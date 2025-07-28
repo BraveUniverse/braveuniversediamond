@@ -1,0 +1,17 @@
+{
+  "network": "luksoTestnet",
+  "timestamp": "2025-07-28T22:47:00.923Z",
+  "deployer": "0x38e456661bc6e95A3aCf3B4673844Cb389b60243",
+  "diamond": "0x00102a0aAb6027bB027C0F032583Cf88353E4900",
+  "DiamondCutFacet": "0x0F56c97Efa9489e56c5182e0ec8D1b1DDb0d56EB",
+  "DiamondLoupeFacet": "0x064B536aC9Be1468bCE43E3b027B7Dc2c31B3241",
+  "OwnershipFacet": "0x7588A48567f592b1df4E94b1DF3d08D7e174B6e9",
+  "GridottoCoreV2Facet": "0xD833b388D66e8c89C2e27CE215Ef3aCa01652639",
+  "GridottoExecutionV2Facet": "0xf5F14FcC509d8f2B66C1c27755aDBd899157Dd10",
+  "GridottoPlatformDrawsFacet": "0xc04324D3E6f462c6dC025ef55eE04fdC65FeD186",
+  "GridottoAdminFacetV2": "0x07F97a283F980Fd9e349Ef485e09340CbB3b9Dd2",
+  "GridottoRefundFacet": "0x5350C748ceb4eD5905a62e102906161468221c73",
+  "GridottoPrizeClaimFacet": "0xB427E429408963cf129035B54cB7629B814f00B8",
+  "GridottoLeaderboardFacet": "0x74183a4D37f59Cb363Be0a495d080b2546637465",
+  "OracleFacet": "0x742caF743B3A97B7204D3b2dBFb3CC23Da0b96C6"
+}
