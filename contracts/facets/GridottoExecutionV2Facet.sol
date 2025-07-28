@@ -35,9 +35,22 @@ contract GridottoExecutionV2Facet {
         
         // Calculate fees
         uint256 totalPool = draw.prizePool;
-        uint256 platformFee = (totalPool * s.defaultPlatformFee) / 10000; // 5%
-        uint256 executorFee = (totalPool * s.executorFeePercent) / 10000; // 5%
-        uint256 winnerPrize = totalPool - platformFee - executorFee;
+        uint256 platformFee;
+        uint256 executorFee;
+        uint256 winnerPrize;
+        
+        // For platform weekly draws, fees are already collected
+        if (draw.drawType == LibGridottoStorageV2.DrawType.PLATFORM_WEEKLY) {
+            // Use pre-collected executor fee
+            executorFee = draw.executorFeeCollected;
+            platformFee = 0; // Already added to s.platformFeesLYX
+            winnerPrize = totalPool; // Prize pool already has fees deducted
+        } else {
+            // For other draws, calculate fees from prize pool
+            platformFee = (totalPool * s.defaultPlatformFee) / 10000; // 5%
+            executorFee = (totalPool * s.executorFeePercent) / 10000; // 5%
+            winnerPrize = totalPool - platformFee - executorFee;
+        }
         
         // Special handling for NFT draws with ticket sales
         if (draw.drawType == LibGridottoStorageV2.DrawType.USER_LSP8 && draw.config.ticketPrice > 0) {

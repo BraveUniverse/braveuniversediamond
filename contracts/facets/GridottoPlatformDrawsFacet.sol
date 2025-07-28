@@ -100,17 +100,12 @@ contract GridottoPlatformDrawsFacet {
         draw.executor = msg.sender;
         draw.executedAt = block.timestamp;
         
-        // Calculate distributions
-        uint256 totalPool = draw.prizePool;
-        uint256 platformFee = (totalPool * 500) / 10000; // 5%
-        uint256 executorFee = (totalPool * 500) / 10000; // 5%
-        uint256 monthlyContribution = (totalPool * 2000) / 10000; // 20%
-        uint256 winnerPrize = totalPool - platformFee - executorFee - monthlyContribution;
+        // For weekly draws, fees are already collected in buyTickets
+        // Just use the pre-collected executor fee
+        uint256 executorFee = draw.executorFeeCollected;
+        uint256 winnerPrize = draw.prizePool; // Prize pool already has fees deducted
         
-        // Update balances
-        s.platformFeesLYX += platformFee;
-        s.monthlyPoolBalance += monthlyContribution;
-        draw.monthlyPoolContribution = monthlyContribution;
+        // No need to calculate or deduct fees again - they were handled in buyTickets
         
         // Select winner using Oracle
         uint256 randomNumber = IOracleFacet(address(this)).getRandomNumber();

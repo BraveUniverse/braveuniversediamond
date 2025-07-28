@@ -174,14 +174,32 @@ contract GridottoCoreV2Facet {
             
             require(msg.value >= totalCost, "Insufficient payment");
             
-            // For non-weekly LYX draws, deduct 2% for monthly pool
-            if (draw.drawType != LibGridottoStorageV2.DrawType.PLATFORM_WEEKLY) {
+            // For platform weekly draws, calculate fees upfront
+            if (draw.drawType == LibGridottoStorageV2.DrawType.PLATFORM_WEEKLY) {
+                // Calculate all fees
+                uint256 platformFee = (totalCost * draw.config.platformFeePercent) / 10000; // 5%
+                uint256 executorFee = (totalCost * s.executorFeePercent) / 10000; // 5%
+                uint256 monthlyContribution = (totalCost * s.weeklyMonthlyPercent) / 10000; // 20%
+                
+                // Add to respective pools
+                s.platformFeesLYX += platformFee;
+                draw.executorFeeCollected += executorFee;
+                s.monthlyPoolBalance += monthlyContribution;
+                
+                // Only add net amount to prize pool
+                uint256 netAmount = totalCost - platformFee - executorFee - monthlyContribution;
+                draw.prizePool += netAmount;
+                
+                // Track contributions
+                draw.monthlyPoolContribution += monthlyContribution;
+            } else if (draw.drawType != LibGridottoStorageV2.DrawType.PLATFORM_WEEKLY) {
+                // For non-weekly LYX draws, deduct 2% for monthly pool
                 uint256 monthlyContribution = (totalCost * s.monthlyPoolPercent) / 10000;
                 s.monthlyPoolBalance += monthlyContribution;
                 draw.prizePool += (totalCost - monthlyContribution);
                 draw.monthlyPoolContribution += monthlyContribution;
             } else {
-                // Weekly draws add full amount to prize pool
+                // This case shouldn't happen anymore
                 draw.prizePool += totalCost;
             }
             
