@@ -27,6 +27,9 @@ contract GridottoPlatformDrawsFacet {
         
         // Create first weekly draw
         _createWeeklyDraw();
+        
+        // Create first monthly draw
+        _createMonthlyDraw();
     }
     
     // Create weekly draw (internal)
@@ -73,10 +76,10 @@ contract GridottoPlatformDrawsFacet {
         });
         draw.startTime = block.timestamp;
         draw.endTime = block.timestamp + 28 days;
-        draw.prizePool = s.monthlyPoolBalance;
+        draw.prizePool = s.monthlyPoolBalance; // Transfer accumulated balance to prize pool
         
         s.currentMonthlyDrawId = drawId;
-        s.monthlyPoolBalance = 0; // Reset pool
+        s.monthlyPoolBalance = 0; // Reset pool after transferring to draw
         s.weeklyDrawCount = 0; // Reset counter
         s.totalDrawsCreated++;
         
@@ -149,10 +152,7 @@ contract GridottoPlatformDrawsFacet {
         // Create new weekly draw
         _createWeeklyDraw();
         
-        // Create monthly draw if 4 weeks completed
-        if (s.weeklyDrawCount >= 4 && s.currentMonthlyDrawId == 0) {
-            _createMonthlyDraw();
-        }
+        // No need to create monthly here - it's handled in executeMonthlyDraw
     }
     
     // Execute monthly draw
@@ -167,6 +167,9 @@ contract GridottoPlatformDrawsFacet {
         // Build participant list from monthly tickets
         _buildMonthlyParticipantList(drawId);
         require(draw.participants.length > 0, "No participants");
+        
+        // Update prize pool with accumulated monthly balance
+        draw.prizePool += s.monthlyPoolBalance;
         
         draw.isCompleted = true;
         draw.executor = msg.sender;
@@ -215,11 +218,11 @@ contract GridottoPlatformDrawsFacet {
             require(success, "Executor fee failed");
         }
         
-        // Reset monthly draw ID
-        s.currentMonthlyDrawId = 0;
-        
         // Reset all users' monthly tickets
         _resetAllMonthlyTickets();
+        
+        // Create new monthly draw immediately
+        _createMonthlyDraw();
     }
     
     // Build participant list for monthly draw
