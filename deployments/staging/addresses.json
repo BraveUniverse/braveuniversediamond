@@ -1,16 +1,17 @@
 {
-  "diamond": "0xda142c5978D707E83618390F4f8796bD7eb3a790",
+  "diamond": "0x5Ad808FAE645BA3682170467114e5b80A70bF276",
   "diamondCutFacet": "0x7C1BedB4DB36c95f810361aC291E50e1719AE4BF",
   "diamondLoupeFacet": "0x8C272e3e0a3B0dB07c152F38981c3a04021a6377",
   "ownershipFacet": "0xc6Ca514Ab32458bf35c04f908463345149a3c6A8",
   "deployedAt": "2025-07-18T21:37:00.925Z",
   "network": "luksoTestnet",
   "oracleFacet": "0xe5C86710e4E7246Ec17340C3944261fE8584Ae24",
-  "lastUpdated": "2025-07-28T22:05:13.409Z",
+  "lastUpdated": "2025-07-28T22:13:01.060Z",
   "gridottoPlatformDrawsFacet": "0xfB92F9Ba3ae3808a8Cc6aD3C1b40F72DcEECD682",
-  "GridottoCoreV2Facet": "0x772080Cf1DE87Ea8fa26CA84F8Dbfd061241d556",
-  "GridottoExecutionV2Facet": "0xa105D4e782433D0fA69487dDedd843a76DF07fe0",
-  "GridottoAdminFacetV2": "0xAd4E93C8b3eb14cE7f53704Ee14E6cBf5f445489",
-  "GridottoRefundFacet": "0x5828e19c19268Ef337Dad917D5811C0f8209a808",
-  "GridottoPrizeClaimFacet": "0xc38DbA39c0C79ECBCeb03816b741732be49256a7"
+  "GridottoCoreV2Facet": "0xE5379a6d0b1C8Af3f3A0d34A146E5f4C10E04C9f",
+  "GridottoExecutionV2Facet": "0x0F5359601D27248F2d30Dfea6dB0bd6b084373A4",
+  "GridottoAdminFacetV2": "0xb2bE35049E74800E7df2dF7B5B9d798f31193a94",
+  "GridottoRefundFacet": "0xe273338730a33215EFaaa5A8B45040Fe7B833baF",
+  "GridottoPrizeClaimFacet": "0xaF18F4E55065ee8cFBEF3F065B83516Bc75A49c4",
+  "GridottoPlatformDrawsFacet": "0x091B3e9698355296CCE3BC51Eeb5F29caBaB4AcA"
 }
