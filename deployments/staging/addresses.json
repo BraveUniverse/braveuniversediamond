@@ -6,6 +6,11 @@
   "deployedAt": "2025-07-18T21:37:00.925Z",
   "network": "luksoTestnet",
   "oracleFacet": "0xe5C86710e4E7246Ec17340C3944261fE8584Ae24",
-  "lastUpdated": "2025-07-28T21:58:00.936Z",
-  "gridottoPlatformDrawsFacet": "0xfB92F9Ba3ae3808a8Cc6aD3C1b40F72DcEECD682"
+  "lastUpdated": "2025-07-28T22:05:13.409Z",
+  "gridottoPlatformDrawsFacet": "0xfB92F9Ba3ae3808a8Cc6aD3C1b40F72DcEECD682",
+  "GridottoCoreV2Facet": "0x772080Cf1DE87Ea8fa26CA84F8Dbfd061241d556",
+  "GridottoExecutionV2Facet": "0xa105D4e782433D0fA69487dDedd843a76DF07fe0",
+  "GridottoAdminFacetV2": "0xAd4E93C8b3eb14cE7f53704Ee14E6cBf5f445489",
+  "GridottoRefundFacet": "0x5828e19c19268Ef337Dad917D5811C0f8209a808",
+  "GridottoPrizeClaimFacet": "0xc38DbA39c0C79ECBCeb03816b741732be49256a7"
 }
