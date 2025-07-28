@@ -174,33 +174,34 @@ contract GridottoCoreV2Facet {
             
             require(msg.value >= totalCost, "Insufficient payment");
             
-            // For platform weekly draws, calculate fees upfront
+            // Calculate all fees upfront for all LYX-based draws
+            uint256 platformFee = (totalCost * draw.config.platformFeePercent) / 10000;
+            uint256 executorFee = (totalCost * s.executorFeePercent) / 10000;
+            uint256 netAmount = totalCost - platformFee - executorFee;
+            
+            // For platform weekly draws, also deduct monthly contribution
             if (draw.drawType == LibGridottoStorageV2.DrawType.PLATFORM_WEEKLY) {
-                // Calculate all fees
-                uint256 platformFee = (totalCost * draw.config.platformFeePercent) / 10000; // 5%
-                uint256 executorFee = (totalCost * s.executorFeePercent) / 10000; // 5%
                 uint256 monthlyContribution = (totalCost * s.weeklyMonthlyPercent) / 10000; // 20%
-                
-                // Add to respective pools
-                s.platformFeesLYX += platformFee;
-                draw.executorFeeCollected += executorFee;
+                netAmount -= monthlyContribution;
                 s.monthlyPoolBalance += monthlyContribution;
-                
-                // Only add net amount to prize pool
-                uint256 netAmount = totalCost - platformFee - executorFee - monthlyContribution;
-                draw.prizePool += netAmount;
-                
-                // Track contributions
                 draw.monthlyPoolContribution += monthlyContribution;
-            } else if (draw.drawType != LibGridottoStorageV2.DrawType.PLATFORM_WEEKLY) {
-                // For non-weekly LYX draws, deduct 2% for monthly pool
+            } else if (draw.drawType != LibGridottoStorageV2.DrawType.PLATFORM_MONTHLY) {
+                // For user draws, deduct 2% for monthly pool
                 uint256 monthlyContribution = (totalCost * s.monthlyPoolPercent) / 10000;
+                netAmount -= monthlyContribution;
                 s.monthlyPoolBalance += monthlyContribution;
-                draw.prizePool += (totalCost - monthlyContribution);
                 draw.monthlyPoolContribution += monthlyContribution;
-            } else {
-                // This case shouldn't happen anymore
-                draw.prizePool += totalCost;
+            }
+            
+            // Update balances
+            s.platformFeesLYX += platformFee;
+            draw.executorFeeCollected += executorFee;
+            draw.prizePool += netAmount;
+            
+            // For NFT draws, also track creator fee
+            if (draw.drawType == LibGridottoStorageV2.DrawType.USER_LSP8 && draw.config.ticketPrice > 0) {
+                // Creator gets the net amount minus winner's share
+                draw.creatorFeeCollected = netAmount;
             }
             
             // Refund excess
@@ -209,9 +210,20 @@ contract GridottoCoreV2Facet {
                 require(success, "Refund failed");
             }
         } else if (draw.drawType == LibGridottoStorageV2.DrawType.USER_LSP7) {
-            // Handle token payment
+            // Handle token payment - fees will be deducted from token
             ILSP7(draw.tokenAddress).transfer(msg.sender, address(this), totalCost, true, "");
-            draw.prizePool += totalCost;
+            
+            // Calculate fees for token draws
+            uint256 platformFee = (totalCost * draw.config.platformFeePercent) / 10000;
+            uint256 executorFee = (totalCost * s.executorFeePercent) / 10000;
+            uint256 monthlyContribution = (totalCost * s.monthlyPoolPercent) / 10000;
+            uint256 netAmount = totalCost - platformFee - executorFee - monthlyContribution;
+            
+            // Update token-specific balances
+            s.platformFeesToken[draw.tokenAddress] += platformFee;
+            draw.executorFeeCollected += executorFee;
+            // Note: Monthly contribution in tokens needs special handling
+            draw.prizePool += netAmount;
         }
         
         // Update participant data
@@ -352,7 +364,8 @@ contract GridottoCoreV2Facet {
         bool isCompleted,
         bool isCancelled,
         uint256 participantCount,
-        uint256 monthlyPoolContribution
+        uint256 monthlyPoolContribution,
+        uint256 executorFeeCollected
     ) {
         LibGridottoStorageV2.Draw storage draw = LibGridottoStorageV2.layout().draws[drawId];
         
@@ -379,7 +392,8 @@ contract GridottoCoreV2Facet {
             draw.isCompleted,
             draw.isCancelled,
             draw.participants.length,
-            draw.monthlyPoolContribution
+            draw.monthlyPoolContribution,
+            draw.executorFeeCollected
         );
     }
 }
